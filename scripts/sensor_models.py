@@ -6,29 +6,48 @@
 #   Create a plant record using plant1 = Plant(temp_addr, humidity_addr, lux_addr, adc_addr)
 #   Updating individual sensor values can be done with 
 
+# Note that SMBus must be imported and initiated in order to use these classes.
+
 class SensorCluster(object):
         'Base class for each individual plant - Contains a cluster of various sensors'
         ClusterCount = 0
 
-        def __init__(self, temp_addr, humidity_addr, lux_addr, adc_addr):
+        def __init__(self, ID, temp_addr, humidity_addr, lux_addr, adc_addr):
         # Initializes cluster, enumeration, and sets up address info
+                self.ID = ID # Plant number specified by caller
                 self.temp_addr = temp_addr
                 self.humidity_addr = humidity_addr
                 self.lux_addr = lux_addr
-                self.adc_addr = adc_addr
+                self.adc_addr = ADC_ADDR
                 self.temp = 0
                 self.humidity = 0
                 self.lux = 0
                 self.soil_moisture = 0
-                self.fertilizer = 0
+                self.acidity = 0
                 SensorCluster.ClusterCount += 1
 
         def updateAllSensors():
-                updateTemp()
-                updateLux()
-                updateHumidity()
-                updateSoilMoisture()
-                updateFertilizer()
+            print("Storing sensor data...")
+            try:
+                if updateTemp() == False:
+                    print("The temperature module failed to update")
+                    return False
+                if updateLux() == False:
+                    print("The light sensor failed to update")
+                    return False
+                if updateHumidity() == False:
+                    print("The humidity sensor failed to update")
+                    return False
+                if updateSoilMoisture() == False:
+                    print("The soil moisture sensor or ADC failed to update")
+                    return False
+                if updateAcidity() == False:
+                    print("The acidity sensor or ADC failed to update")
+                    return False
+                return True
+            except IOError:
+                print("Fatal error reading IO. Pass for now (DEV ONLY), as it probably means something just isn't connected.")
+                pass
 
         def updateTemp():
         # Method will update the temp attribute and return the value to the caller
@@ -111,9 +130,17 @@ class SensorCluster(object):
                 self.moisture = 50
                 return True
 
-        def updateFertilizer():
+        def updateAcidity():
                 # Needs a lot of work. Inserting dummy.
                 # This method will work off of the ADC module.
-                self.fertilizer = 50
+                self.acidity = 50
                 return True
 
+        def saveAllSensors():
+            # Saves all of the current sensor values to the webservice Plant object
+            plant = models.Plant.for_slot(self.ID)
+            plant.sensor_data_points.light().build(sensor_value=self.lux).save()
+            plant.sensor_data_points.water().build(sensor_value=self.moisture).save()
+            plant.sensor_data_points.humidity().build(sensor_value=self.humidity).save()
+            plant.sensor_data_points.acidity().build(sensor_value=self.acidity).save()
+            plant.sensor_data_points.temperature().build(sensor_value=self.temperature).save()
