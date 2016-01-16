@@ -7,18 +7,24 @@
 #   Updating individual sensor values can be done with 
 
 # Note that SMBus must be imported and initiated in order to use these classes.
+import smbus
+from i2c_utility import TCA_select, ADC_control
+
+
 
 class SensorCluster(object):
         'Base class for each individual plant - Contains a cluster of various sensors'
         ClusterCount = 0
 
-        def __init__(self, ID, temp_addr, humidity_addr, lux_addr, adc_addr):
+        def __init__(self, ID, temp_addr, humidity_addr, lux_addr, lux_mux_chan, adc_addr, mux_addr,):
         # Initializes cluster, enumeration, and sets up address info
                 self.ID = ID # Plant number specified by caller
                 self.temp_addr = temp_addr
                 self.humidity_addr = humidity_addr
                 self.lux_addr = lux_addr
-                self.adc_addr = ADC_ADDR
+                self.lux_mux_chan = lux_mux_chan
+                self.adc_addr = adc_addr
+                self.mux_addr = mux_addr
                 self.temp = 0
                 self.humidity = 0
                 self.lux = 0
@@ -68,10 +74,15 @@ class SensorCluster(object):
                 LUX_CHORD_MASK = 0b01110000
                 LUX_STEP_MASK = 0b00001111
                 LUX_DEVICE_ADDR = self.lux_addr
-                ### Read light data
+
+                ### Select correct I2C mux channel on TCA module
+                TCA_select(self.mux_addr, self.lux_mux_chan)
+
+                ### Make sure lux sensor is powered up.
                 bus.write_byte(LUX_DEVICE_ADDR, LUX_PWR_ON)
                 lux_on = bus.read_byte_data(LUX_DEVICE_ADDR, LUX_PWR_ON)
-                # Make sure device is powered up
+
+                # Check for successful powerup
                 if (lux_on == LUX_PWR_ON):
                         ## Send command to initiate ADC on each channel
                         ## Read each channel after the new data is ready
