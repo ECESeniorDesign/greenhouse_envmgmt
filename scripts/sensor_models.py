@@ -9,6 +9,7 @@
 # Note that SMBus must be imported and initiated in order to use these classes.
 import smbus
 from i2c_utility import TCA_select, ADC_control
+from math import e
 
 
 
@@ -32,37 +33,14 @@ class SensorCluster(object):
                 self.acidity = 0
                 SensorCluster.ClusterCount += 1
 
-        def updateAllSensors():
-            print("Storing sensor data...")
-            try:
-                if updateTemp() == False:
-                    print("The temperature module failed to update")
-                    return False
-                if updateLux() == False:
-                    print("The light sensor failed to update")
-                    return False
-                if updateHumidity() == False:
-                    print("The humidity sensor failed to update")
-                    return False
-                if updateSoilMoisture() == False:
-                    print("The soil moisture sensor or ADC failed to update")
-                    return False
-                if updateAcidity() == False:
-                    print("The acidity sensor or ADC failed to update")
-                    return False
-                return True
-            except IOError:
-                print("Fatal error reading IO. Pass for now (DEV ONLY), as it probably means something just isn't connected.")
-                pass
-
-        def updateTemp():
+        def updateTemp(self, bus):
         # Method will update the temp attribute and return the value to the caller
             DEVICE_TEMP_CMD = 0x00 # Command to read temperature
             self.temp = bus.read_byte_data(self.temp_addr, DEVICE_TEMP_CMD)
             #print "Current temperature for Plant " + str(self.num) + "is " + str(temp)
             return True
 
-        def updateLux():
+        def updateLux(self, bus):
                 # This will currently only work with one lux sensor, as the 
                 # i2c multiplexer still needs to be implemented.
                 DEVICE_REG_OUT = 0x1d
@@ -76,7 +54,8 @@ class SensorCluster(object):
                 LUX_DEVICE_ADDR = self.lux_addr
 
                 ### Select correct I2C mux channel on TCA module
-                TCA_select(self.mux_addr, self.lux_mux_chan)
+                print("Selecting channel " + str(self.lux_mux_chan))
+                TCA_select(bus, self.mux_addr, self.lux_mux_chan)
 
                 ### Make sure lux sensor is powered up.
                 bus.write_byte(LUX_DEVICE_ADDR, LUX_PWR_ON)
@@ -130,24 +109,33 @@ class SensorCluster(object):
                         print("Lux device is not on.")
                         #return False
 
-        def updateHumidity():
+        def updateHumidity(self, bus):
                 # Currently needs work. Inserting dummy for now.
                 self.humidity = 75
                 return True
 
-        def updateSoilMoisture():
+        def updateSoilMoisture(self, bus):
                 # Needs a lot of work. Inserting dummy.
                 # This method will work off of the ADC module
                 self.moisture = 50
                 return True
 
-        def updateAcidity():
+        def updateAcidity(self, bus):
                 # Needs a lot of work. Inserting dummy.
                 # This method will work off of the ADC module.
                 self.acidity = 50
                 return True
 
-        def saveAllSensors():
+
+        def updateAllSensors(self, bus):
+            print("Storing sensor data...")
+            self.updateTemp(bus)
+            self.updateLux(bus)
+            self.updateHumidity(bus)
+            self.updateSoilMoisture(bus)
+            self.updateAcidity(bus)
+
+        def saveAllSensors(self, bus):
             # Saves all of the current sensor values to the webservice Plant object
             plant = models.Plant.for_slot(self.ID)
             plant.sensor_data_points.light().build(sensor_value=self.lux).save()
