@@ -1,0 +1,651 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<export version="D">
+  <design>
+    <source>C:\Users\jeffb\Documents\GitHub\greenhouse-sensors\hardware\kicad\sensor_module.sch</source>
+    <date>1/23/2016 5:39:06 PM</date>
+    <tool>Eeschema 4.0.1-stable</tool>
+    <sheet number="1" name="/" tstamps="/">
+      <title_block>
+        <title/>
+        <company/>
+        <rev/>
+        <date/>
+        <source>sensor_module.sch</source>
+        <comment number="1" value=""/>
+        <comment number="2" value=""/>
+        <comment number="3" value=""/>
+        <comment number="4" value=""/>
+      </title_block>
+    </sheet>
+  </design>
+  <components>
+    <comp ref="P1">
+      <value>CONN_01X04</value>
+      <footprint>Socket_Strips:Socket_Strip_Angled_1x04</footprint>
+      <libsource lib="conn" part="CONN_01X04"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A04587</tstamp>
+    </comp>
+    <comp ref="U0">
+      <value>STLM75M2F</value>
+      <footprint>SMD_Packages:SOIC-8-N</footprint>
+      <libsource lib="stlm75m2f" part="STLM75M2F"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A05002</tstamp>
+    </comp>
+    <comp ref="U2">
+      <value>TSL2550D</value>
+      <footprint>SMD_Packages:SOIC-8-N</footprint>
+      <libsource lib="tsl2550d" part="TSL2550D"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A05239</tstamp>
+    </comp>
+    <comp ref="R1">
+      <value>2500</value>
+      <footprint>Resistors_SMD:R_0201</footprint>
+      <libsource lib="device" part="R_Small"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A062C5</tstamp>
+    </comp>
+    <comp ref="R2">
+      <value>2500</value>
+      <footprint>Resistors_SMD:R_0201</footprint>
+      <libsource lib="device" part="R_Small"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A06328</tstamp>
+    </comp>
+    <comp ref="C1">
+      <value>100nF</value>
+      <footprint>Capacitors_SMD:C_0201</footprint>
+      <libsource lib="device" part="C_Small"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A07773</tstamp>
+    </comp>
+    <comp ref="C7">
+      <value>100nF</value>
+      <footprint>Capacitors_SMD:C_0201</footprint>
+      <libsource lib="device" part="C_Small"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A07D1A</tstamp>
+    </comp>
+    <comp ref="U3">
+      <value>HIH7121</value>
+      <footprint>SIP4:SIP4</footprint>
+      <libsource lib="HIH7121" part="HIH7121"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A2EF8A</tstamp>
+    </comp>
+    <comp ref="U1">
+      <value>TCA9543ADR</value>
+      <footprint>SMD_Packages:SOIC-14_N</footprint>
+      <datasheet>DOCUMENTATION</datasheet>
+      <libsource lib="TCA9543ADR" part="TCA9543ADR"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A2F2CE</tstamp>
+    </comp>
+    <comp ref="U4">
+      <value>MCP3422A0-E/SN</value>
+      <footprint>SMD_Packages:SOIC-8-N</footprint>
+      <libsource lib="MCP3422A0-E_SN" part="MCP3422A0-E/SN"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A2F579</tstamp>
+    </comp>
+    <comp ref="JPA2">
+      <value>JUMPER</value>
+      <footprint>Pin_Headers:Pin_Header_Straight_1x02</footprint>
+      <libsource lib="device" part="JUMPER"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A32949</tstamp>
+    </comp>
+    <comp ref="JPA1">
+      <value>JUMPER</value>
+      <footprint>Pin_Headers:Pin_Header_Straight_1x02</footprint>
+      <libsource lib="device" part="JUMPER"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A329E2</tstamp>
+    </comp>
+    <comp ref="JPA0">
+      <value>JUMPER</value>
+      <footprint>Pin_Headers:Pin_Header_Straight_1x02</footprint>
+      <libsource lib="device" part="JUMPER"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A32AAD</tstamp>
+    </comp>
+    <comp ref="R9">
+      <value>330k</value>
+      <footprint>Resistors_SMD:R_0201</footprint>
+      <libsource lib="device" part="R"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A32E97</tstamp>
+    </comp>
+    <comp ref="R8">
+      <value>330k</value>
+      <footprint>Resistors_SMD:R_0201</footprint>
+      <libsource lib="device" part="R"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A330E0</tstamp>
+    </comp>
+    <comp ref="R7">
+      <value>330k</value>
+      <footprint>Resistors_SMD:R_0201</footprint>
+      <libsource lib="device" part="R"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A3312F</tstamp>
+    </comp>
+    <comp ref="JPB1">
+      <value>Jumper_NC_Small</value>
+      <footprint>Pin_Headers:Pin_Header_Straight_1x02</footprint>
+      <libsource lib="device" part="Jumper_NC_Small"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A3476D</tstamp>
+    </comp>
+    <comp ref="JPB0">
+      <value>Jumper_NC_Small</value>
+      <footprint>Pin_Headers:Pin_Header_Straight_1x02</footprint>
+      <libsource lib="device" part="Jumper_NC_Small"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A34813</tstamp>
+    </comp>
+    <comp ref="R11">
+      <value>330k</value>
+      <footprint>Resistors_SMD:R_0201</footprint>
+      <libsource lib="device" part="R"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A354C9</tstamp>
+    </comp>
+    <comp ref="R10">
+      <value>330k</value>
+      <footprint>Resistors_SMD:R_0201</footprint>
+      <libsource lib="device" part="R"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A35A82</tstamp>
+    </comp>
+    <comp ref="R12">
+      <value>3600</value>
+      <footprint>Resistors_SMD:R_0201</footprint>
+      <libsource lib="device" part="R"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A38BBF</tstamp>
+    </comp>
+    <comp ref="R13">
+      <value>3600</value>
+      <footprint>Resistors_SMD:R_0201</footprint>
+      <libsource lib="device" part="R"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A38C38</tstamp>
+    </comp>
+    <comp ref="C5">
+      <value>100nF</value>
+      <footprint>Capacitors_SMD:C_0201</footprint>
+      <libsource lib="device" part="C_Small"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A39262</tstamp>
+    </comp>
+    <comp ref="C4">
+      <value>100nF</value>
+      <footprint>Capacitors_SMD:C_0201</footprint>
+      <libsource lib="device" part="C_Small"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A3C63D</tstamp>
+    </comp>
+    <comp ref="R14">
+      <value>2500</value>
+      <footprint>Resistors_SMD:R_0201</footprint>
+      <libsource lib="device" part="R_Small"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A4644C</tstamp>
+    </comp>
+    <comp ref="R15">
+      <value>2500</value>
+      <footprint>Resistors_SMD:R_0201</footprint>
+      <libsource lib="device" part="R_Small"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A4748B</tstamp>
+    </comp>
+    <comp ref="C6">
+      <value>100nF</value>
+      <footprint>Capacitors_SMD:C_0201</footprint>
+      <libsource lib="device" part="C_Small"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A47991</tstamp>
+    </comp>
+    <comp ref="R17">
+      <value>2500</value>
+      <footprint>Resistors_SMD:R_0201</footprint>
+      <libsource lib="device" part="R_Small"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A4F43D</tstamp>
+    </comp>
+    <comp ref="R16">
+      <value>2500</value>
+      <footprint>Resistors_SMD:R_0201</footprint>
+      <libsource lib="device" part="R_Small"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A4F4C9</tstamp>
+    </comp>
+    <comp ref="P3">
+      <value>Moisture_Sensor</value>
+      <footprint>Socket_Strips:Socket_Strip_Angled_1x03</footprint>
+      <libsource lib="conn" part="CONN_01X03"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A56595</tstamp>
+    </comp>
+    <comp ref="P2">
+      <value>PH_Sensor</value>
+      <footprint>Socket_Strips:Socket_Strip_Angled_1x02</footprint>
+      <libsource lib="conn" part="CONN_01X02"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A56606</tstamp>
+    </comp>
+    <comp ref="R18">
+      <value>2500</value>
+      <footprint>Resistors_SMD:R_0201</footprint>
+      <libsource lib="device" part="R_Small"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A572D7</tstamp>
+    </comp>
+    <comp ref="R19">
+      <value>2500</value>
+      <footprint>Resistors_SMD:R_0201</footprint>
+      <libsource lib="device" part="R_Small"/>
+      <sheetpath names="/" tstamps="/"/>
+      <tstamp>56A5B068</tstamp>
+    </comp>
+  </components>
+  <libparts>
+    <libpart lib="conn" part="CONN_01X02">
+      <description>Connector 01x02</description>
+      <footprints>
+        <fp>Pin_Header_Straight_1X02</fp>
+        <fp>Pin_Header_Angled_1X02</fp>
+        <fp>Socket_Strip_Straight_1X02</fp>
+        <fp>Socket_Strip_Angled_1X02</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">P</field>
+        <field name="Value">CONN_01X02</field>
+      </fields>
+      <pins>
+        <pin num="1" name="P1" type="passive"/>
+        <pin num="2" name="P2" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="conn" part="CONN_01X03">
+      <description>Connector 01x03</description>
+      <footprints>
+        <fp>Pin_Header_Straight_1X03</fp>
+        <fp>Pin_Header_Angled_1X03</fp>
+        <fp>Socket_Strip_Straight_1X03</fp>
+        <fp>Socket_Strip_Angled_1X03</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">P</field>
+        <field name="Value">CONN_01X03</field>
+      </fields>
+      <pins>
+        <pin num="1" name="P1" type="passive"/>
+        <pin num="2" name="P2" type="passive"/>
+        <pin num="3" name="P3" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="conn" part="CONN_01X04">
+      <description>Connector 01x04</description>
+      <footprints>
+        <fp>Pin_Header_Straight_1X04</fp>
+        <fp>Pin_Header_Angled_1X04</fp>
+        <fp>Socket_Strip_Straight_1X04</fp>
+        <fp>Socket_Strip_Angled_1X04</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">P</field>
+        <field name="Value">CONN_01X04</field>
+      </fields>
+      <pins>
+        <pin num="1" name="P1" type="passive"/>
+        <pin num="2" name="P2" type="passive"/>
+        <pin num="3" name="P3" type="power_out"/>
+        <pin num="4" name="P4" type="power_out"/>
+      </pins>
+    </libpart>
+    <libpart lib="device" part="C_Small">
+      <description>Unpolarized capacitor</description>
+      <footprints>
+        <fp>C?</fp>
+        <fp>C_????_*</fp>
+        <fp>C_????</fp>
+        <fp>SMD*_c</fp>
+        <fp>Capacitor*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">C</field>
+        <field name="Value">C_Small</field>
+      </fields>
+      <pins>
+        <pin num="1" name="~" type="passive"/>
+        <pin num="2" name="~" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="HIH7121" part="HIH7121">
+      <fields>
+        <field name="Reference">U</field>
+        <field name="Value">HIH7121</field>
+        <field name="Footprint">MODULE</field>
+        <field name="Datasheet">DOCUMENTATION</field>
+      </fields>
+      <pins>
+        <pin num="1" name="VDD" type="power_in"/>
+        <pin num="2" name="VSS" type="power_in"/>
+        <pin num="3" name="SCL" type="BiDi"/>
+        <pin num="4" name="SDA" type="BiDi"/>
+      </pins>
+    </libpart>
+    <libpart lib="device" part="JUMPER">
+      <fields>
+        <field name="Reference">JP</field>
+        <field name="Value">JUMPER</field>
+      </fields>
+      <pins>
+        <pin num="1" name="1" type="passive"/>
+        <pin num="2" name="2" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="device" part="Jumper_NC_Small">
+      <description>Jumper normally close</description>
+      <fields>
+        <field name="Reference">JP</field>
+        <field name="Value">Jumper_NC_Small</field>
+      </fields>
+      <pins>
+        <pin num="1" name="1" type="passive"/>
+        <pin num="2" name="2" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="MCP3422A0-E_SN" part="MCP3422A0-E/SN">
+      <fields>
+        <field name="Reference">U</field>
+        <field name="Value">MCP3422A0-E/SN</field>
+        <field name="Footprint">SOIC8-N_MC</field>
+      </fields>
+      <pins>
+        <pin num="1" name="CH1+" type="input"/>
+        <pin num="2" name="CH1-" type="input"/>
+        <pin num="3" name="VDD" type="input"/>
+        <pin num="4" name="SDA" type="BiDi"/>
+        <pin num="5" name="SCL" type="input"/>
+        <pin num="6" name="VSS" type="input"/>
+        <pin num="7" name="CH2+" type="input"/>
+        <pin num="8" name="CH2-" type="input"/>
+      </pins>
+    </libpart>
+    <libpart lib="device" part="R">
+      <description>Resistor</description>
+      <footprints>
+        <fp>R_*</fp>
+        <fp>Resistor_*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">R</field>
+        <field name="Value">R</field>
+      </fields>
+      <pins>
+        <pin num="1" name="~" type="passive"/>
+        <pin num="2" name="~" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="device" part="R_Small">
+      <description>Resistor</description>
+      <footprints>
+        <fp>Resistor_*</fp>
+        <fp>R_*</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">R</field>
+        <field name="Value">R_Small</field>
+      </fields>
+      <pins>
+        <pin num="1" name="~" type="passive"/>
+        <pin num="2" name="~" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="stlm75m2f" part="STLM75M2F">
+      <aliases>
+        <alias>STLM75</alias>
+      </aliases>
+      <footprints>
+        <fp>SO*</fp>
+        <fp>SOIC8</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">U</field>
+        <field name="Value">STLM75M2F</field>
+        <field name="Footprint">SO8</field>
+      </fields>
+      <pins>
+        <pin num="1" name="SDA" type="BiDi"/>
+        <pin num="2" name="SCL" type="BiDi"/>
+        <pin num="3" name="~OS~/INT" type="BiDi"/>
+        <pin num="4" name="GND" type="power_in"/>
+        <pin num="5" name="VDD" type="power_in"/>
+        <pin num="6" name="A0" type="passive"/>
+        <pin num="7" name="A1" type="passive"/>
+        <pin num="8" name="A2" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="TCA9543ADR" part="TCA9543ADR">
+      <fields>
+        <field name="Reference">U</field>
+        <field name="Value">TCA9543ADR</field>
+        <field name="Footprint">MODULE</field>
+        <field name="Datasheet">DOCUMENTATION</field>
+      </fields>
+      <pins>
+        <pin num="1" name="A0" type="input"/>
+        <pin num="2" name="A1" type="input"/>
+        <pin num="3" name="~RESET~" type="passive"/>
+        <pin num="4" name="~INT0~" type="passive"/>
+        <pin num="5" name="SD0" type="BiDi"/>
+        <pin num="6" name="SC0" type="BiDi"/>
+        <pin num="7" name="GND" type="power_in"/>
+        <pin num="8" name="~INT1~" type="passive"/>
+        <pin num="9" name="SD1" type="BiDi"/>
+        <pin num="10" name="SC1" type="BiDi"/>
+        <pin num="11" name="~INT~" type="passive"/>
+        <pin num="12" name="SCL" type="BiDi"/>
+        <pin num="13" name="SDA" type="BiDi"/>
+        <pin num="14" name="VCC" type="power_in"/>
+      </pins>
+    </libpart>
+    <libpart lib="tsl2550d" part="TSL2550D">
+      <aliases>
+        <alias>TSL2550</alias>
+      </aliases>
+      <footprints>
+        <fp>SO*</fp>
+        <fp>SOIC8</fp>
+      </footprints>
+      <fields>
+        <field name="Reference">U</field>
+        <field name="Value">TSL2550D</field>
+        <field name="Footprint">SO8</field>
+      </fields>
+      <pins>
+        <pin num="1" name="VDD" type="power_in"/>
+        <pin num="2" name="NC0" type="NotConnected"/>
+        <pin num="3" name="NC1" type="NotConnected"/>
+        <pin num="4" name="GND" type="power_in"/>
+        <pin num="5" name="SMBData" type="BiDi"/>
+        <pin num="6" name="NC2" type="NotConnected"/>
+        <pin num="7" name="NC3" type="NotConnected"/>
+        <pin num="8" name="SMBCLK" type="BiDi"/>
+      </pins>
+    </libpart>
+  </libparts>
+  <libraries>
+    <library logical="MCP3422A0-E_SN">
+      <uri>C:\Users\jeffb\Documents\GitHub\greenhouse-sensors\hardware\libs\MCP3422A0-E_SN.lib</uri>
+    </library>
+    <library logical="HIH7121">
+      <uri>C:\Users\jeffb\Documents\GitHub\greenhouse-sensors\hardware\libs\HIH7121.lib</uri>
+    </library>
+    <library logical="stlm75m2f">
+      <uri>C:\Users\jeffb\Documents\GitHub\greenhouse-sensors\hardware\libs\stlm75m2f.lib</uri>
+    </library>
+    <library logical="TCA9543ADR">
+      <uri>C:\Users\jeffb\Documents\GitHub\greenhouse-sensors\hardware\libs\TCA9543ADR.lib</uri>
+    </library>
+    <library logical="tsl2550d">
+      <uri>C:\Users\jeffb\Documents\GitHub\greenhouse-sensors\hardware\libs\tsl2550d.lib</uri>
+    </library>
+    <library logical="conn">
+      <uri>C:\Program Files\KiCad\share\kicad\library\conn.lib</uri>
+    </library>
+    <library logical="device">
+      <uri>C:\Program Files\KiCad\share\kicad\library\device.lib</uri>
+    </library>
+  </libraries>
+  <nets>
+    <net code="1" name="Net-(JPB0-Pad1)">
+      <node ref="R10" pin="2"/>
+      <node ref="U1" pin="1"/>
+      <node ref="JPB0" pin="1"/>
+    </net>
+    <net code="2" name="Net-(JPB1-Pad1)">
+      <node ref="R11" pin="2"/>
+      <node ref="JPB1" pin="1"/>
+      <node ref="U1" pin="2"/>
+    </net>
+    <net code="3" name="Net-(JPA0-Pad2)">
+      <node ref="U0" pin="6"/>
+      <node ref="JPA0" pin="2"/>
+      <node ref="R7" pin="1"/>
+    </net>
+    <net code="4" name="Net-(JPA1-Pad2)">
+      <node ref="JPA1" pin="2"/>
+      <node ref="U0" pin="7"/>
+      <node ref="R8" pin="1"/>
+    </net>
+    <net code="5" name="Net-(JPA2-Pad2)">
+      <node ref="JPA2" pin="2"/>
+      <node ref="R9" pin="1"/>
+      <node ref="U0" pin="8"/>
+    </net>
+    <net code="6" name="Net-(R12-Pad2)">
+      <node ref="U1" pin="6"/>
+      <node ref="U2" pin="8"/>
+      <node ref="R12" pin="2"/>
+    </net>
+    <net code="7" name="Net-(R13-Pad2)">
+      <node ref="R13" pin="2"/>
+      <node ref="U2" pin="5"/>
+      <node ref="U1" pin="5"/>
+    </net>
+    <net code="8" name="Net-(P2-Pad1)">
+      <node ref="P2" pin="1"/>
+      <node ref="U4" pin="2"/>
+    </net>
+    <net code="9" name="Net-(P3-Pad2)">
+      <node ref="U4" pin="7"/>
+      <node ref="P3" pin="2"/>
+    </net>
+    <net code="10" name="Net-(P2-Pad2)">
+      <node ref="P2" pin="2"/>
+      <node ref="U4" pin="1"/>
+    </net>
+    <net code="11" name="Net-(R19-Pad2)">
+      <node ref="U0" pin="3"/>
+      <node ref="R19" pin="2"/>
+    </net>
+    <net code="12" name="/GND">
+      <node ref="U1" pin="8"/>
+      <node ref="U1" pin="7"/>
+      <node ref="U1" pin="11"/>
+      <node ref="R8" pin="2"/>
+      <node ref="U0" pin="4"/>
+      <node ref="R18" pin="1"/>
+      <node ref="R10" pin="1"/>
+      <node ref="C4" pin="1"/>
+      <node ref="C5" pin="2"/>
+      <node ref="C1" pin="2"/>
+      <node ref="C7" pin="2"/>
+      <node ref="U3" pin="2"/>
+      <node ref="P1" pin="3"/>
+      <node ref="U1" pin="4"/>
+      <node ref="R11" pin="1"/>
+      <node ref="R7" pin="2"/>
+      <node ref="U2" pin="4"/>
+      <node ref="U4" pin="5"/>
+      <node ref="R15" pin="2"/>
+      <node ref="R9" pin="2"/>
+      <node ref="U1" pin="3"/>
+    </net>
+    <net code="13" name="Net-(R16-Pad2)">
+      <node ref="U3" pin="4"/>
+      <node ref="U1" pin="9"/>
+      <node ref="R16" pin="2"/>
+    </net>
+    <net code="14" name="Net-(U2-Pad3)">
+      <node ref="U2" pin="3"/>
+    </net>
+    <net code="15" name="Net-(U2-Pad2)">
+      <node ref="U2" pin="2"/>
+    </net>
+    <net code="16" name="Net-(U2-Pad6)">
+      <node ref="U2" pin="6"/>
+    </net>
+    <net code="17" name="/SCL">
+      <node ref="U4" pin="8"/>
+      <node ref="U4" pin="6"/>
+      <node ref="P3" pin="3"/>
+      <node ref="U0" pin="2"/>
+      <node ref="R2" pin="1"/>
+      <node ref="C6" pin="2"/>
+      <node ref="P1" pin="1"/>
+      <node ref="U1" pin="12"/>
+    </net>
+    <net code="18" name="Net-(U2-Pad7)">
+      <node ref="U2" pin="7"/>
+    </net>
+    <net code="19" name="/SDA">
+      <node ref="R1" pin="2"/>
+      <node ref="P1" pin="2"/>
+      <node ref="U1" pin="13"/>
+      <node ref="U0" pin="1"/>
+      <node ref="R14" pin="2"/>
+      <node ref="U4" pin="4"/>
+    </net>
+    <net code="20" name="Net-(R17-Pad2)">
+      <node ref="U1" pin="10"/>
+      <node ref="U3" pin="3"/>
+      <node ref="R17" pin="2"/>
+    </net>
+    <net code="21" name="/VDD">
+      <node ref="P3" pin="1"/>
+      <node ref="R16" pin="1"/>
+      <node ref="R17" pin="1"/>
+      <node ref="C6" pin="1"/>
+      <node ref="R15" pin="1"/>
+      <node ref="R14" pin="1"/>
+      <node ref="JPB1" pin="2"/>
+      <node ref="JPB0" pin="2"/>
+      <node ref="C4" pin="2"/>
+      <node ref="R12" pin="1"/>
+      <node ref="R13" pin="1"/>
+      <node ref="C5" pin="1"/>
+      <node ref="U0" pin="5"/>
+      <node ref="C1" pin="1"/>
+      <node ref="C7" pin="1"/>
+      <node ref="U3" pin="1"/>
+      <node ref="P1" pin="4"/>
+      <node ref="U2" pin="1"/>
+      <node ref="U4" pin="3"/>
+      <node ref="JPA2" pin="1"/>
+      <node ref="JPA1" pin="1"/>
+      <node ref="JPA0" pin="1"/>
+      <node ref="R19" pin="1"/>
+      <node ref="R18" pin="2"/>
+      <node ref="R1" pin="1"/>
+      <node ref="R2" pin="2"/>
+      <node ref="U1" pin="14"/>
+    </net>
+  </nets>
+</export>

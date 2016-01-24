@@ -9,6 +9,7 @@
 # Note that SMBus must be imported and initiated
 #   in order to use these classes.
 import smbus
+import models
 from i2c_utility import TCA_select, ADC_control
 from time import sleep  # needed to force a delay in humidity module
 from math import e
@@ -123,7 +124,7 @@ class SensorCluster(object):
         TEMP = 0b11111111111111 << 2
         # Currently needs work. Inserting dummy for now.
         TCA_select(bus, self.mux_addr, self.humidity_chan)
-        write_quick(self.humidity_addr)  # Begin conversion
+        #write_quick(self.humidity_addr)  # Begin conversion
         for i in range(3):
             # wait 100ms to make sure the conversion takes place.
             sleep(.1)
@@ -156,7 +157,7 @@ class SensorCluster(object):
         print("Updating sensor data...")
         self.updateTemp(bus)
         self.updateLux(bus)
-        self.updateHumidity(bus)
+        #self.updateHumidity(bus)
         self.updateSoilMoisture(bus)
         self.updateAcidity(bus)
 
@@ -175,4 +176,4 @@ class SensorCluster(object):
             plant.sensor_data_points.acidity(). \
                 build(sensor_value=self.acidity).save()
             plant.sensor_data_points.temperature(). \
-                build(sensor_value=self.temperature).save()
+                build(sensor_value=self.temp).save()
