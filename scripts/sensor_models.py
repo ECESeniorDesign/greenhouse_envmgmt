@@ -117,24 +117,26 @@ class SensorCluster(object):
             # return False
 
     def updateHumidity(self, bus):
+        print("Attempting to read humidity..........")
         tries = 0
         # Create mask for STATUS (first two bits of 64 bit wide result)
-        STATUS = 0b11 << 30
-        HUMIDITY = 0b11111111111111 << 16  # Mask for humidity data
+        STATUS = 0b11 << 6
+        HUMIDITY = 0b11111111111111  # Mask for humidity data
         TEMP = 0b11111111111111 << 2
         # Currently needs work. Inserting dummy for now.
         TCA_select(bus, self.mux_addr, self.humidity_chan)
-        #write_quick(self.humidity_addr)  # Begin conversion
+        bus.write_quick(self.humidity_addr)  # Begin conversion
+        sleep(.35)
         for i in range(3):
             # wait 100ms to make sure the conversion takes place.
-            sleep(.1)
-            data = read_block_data(self.humidity_addr, 0)
-            status = data & STATUS
-            if status == 0:
-                humidity = (data & HUMIDITY) >> 16
-                temp = data & TEMP >> 2
+            data = bus.read_i2c_block_data(self.humidity_addr, 0, 4)
+            status = (data[0] & STATUS) >> 6
+            print("Humidity sensor returned status : " + str(status))
+            if status == 0 or status == 1: 
+                humidity = ((data[0] & 0x3f) << 8) + data[1]
+                #temp = data & TEMP >> 2
                 # Normalize to relative humidity
-                self.humidity = humidity / ((2**14) - 2)
+                self.humidity = humidity*float('6.1e-3')
                 # Temperature is ignored for now pending a successful block
                 # read.
                 return True
@@ -157,7 +159,7 @@ class SensorCluster(object):
         print("Updating sensor data...")
         self.updateTemp(bus)
         self.updateLux(bus)
-        #self.updateHumidity(bus)
+        self.updateHumidity(bus)
         self.updateSoilMoisture(bus)
         self.updateAcidity(bus)
 

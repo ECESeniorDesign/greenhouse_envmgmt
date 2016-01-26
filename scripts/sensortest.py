@@ -8,7 +8,7 @@ sensor_models.models.lazy_record.connect_db("temp.db")
 bus = smbus.SMBus(1)
 
 
-plant0 = SensorCluster(ID=0, temp_addr=0x48, humidity_addr=0x27, humidity_chan=1,
+plant0 = SensorCluster(ID=0, temp_addr=0x48, humidity_addr=0x27, humidity_chan=2,
                        lux_addr=0x39, lux_mux_chan=0, adc_addr=0x00, mux_addr=0x70)
 plant1 = SensorCluster(ID=1, temp_addr=0x48, humidity_addr=0x27, humidity_chan=2,
                        lux_addr=0x39, lux_mux_chan=1, adc_addr=0x00, mux_addr=0x70)
@@ -25,3 +25,4 @@ if plant1.updateAllSensors(bus) == False:
 print("plant0 temperature is " + str(plant0.temp))
 print("plant0 lux is " + str(plant0.lux))
 print("plant1 lux is " + str(plant1.lux))
+print("plant humidity is " + str(plant0.humidity))
