@@ -1,4 +1,5 @@
 EESchema Schematic File Version 2
+LIBS:sensor_module-rescue
 LIBS:power
 LIBS:device
 LIBS:transistors
@@ -50,7 +51,7 @@ Comment3 ""
 Comment4 ""
 $EndDescr
 $Comp
-L CONN_01X04 P1
+L CONN_01X04-RESCUE-sensor_module P1
 U 1 1 56A04587
 P 1250 1000
 F 0 "P1" H 1250 1250 50  0000 C CNN
@@ -148,7 +149,7 @@ F 3 "" H 5750 4050 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L TCA9543ADR U1
+L TCA9543ADR-RESCUE-sensor_module U1
 U 1 1 56A2F2CE
 P 4050 2950
 F 0 "U1" H 4050 2850 50  0000 C CNN
@@ -335,7 +336,7 @@ F 3 "" H 3250 5550 50  0000 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L CONN_01X03 P3
+L CONN_01X03-RESCUE-sensor_module P3
 U 1 1 56A56595
 P 5700 5000
 F 0 "P3" H 5700 5200 50  0000 C CNN

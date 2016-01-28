@@ -11,36 +11,69 @@
 import smbus
 import models
 from i2c_utility import TCA_select, ADC_control
-from time import sleep  # needed to force a delay in humidity module
+import RPi.GPIO as GPIO
+from time import sleep, time  # needed to force a delay in humidity module
 from math import e
 
 
 class SensorCluster(object):
     'Base class for each individual plant containing sensor info'
     ClusterCount = 0
+    analogGPIOPin = 13  # This should be changed based on the GPIO Scheme used.
+    temp_addr = 0x48
+    temp_chan = 0
+    humidity_addr = 0x27
+    humidity_chan = 1
+    lux_addr = 0x39
+    lux_chan = 2
+    adc_addr = 0x00
+    adc_chan = 3
 
-    def __init__(self, ID, temp_addr, humidity_addr, humidity_chan,
-                 lux_addr, lux_mux_chan, adc_addr, mux_addr):
+    @classmethod
+    def analogSensorPower(cls, string):
+        """ Method that turns on all of the analog sensor modules
+            Includes all attached soil moisture sensors
+            Note that all of the SensorCluster object should be attached
+                in parallel and only 1 GPIO pin is available
+                to toggle analog sensor power.
+            The sensor power should be left on for at least 100ms
+                in order to allow the sensors to stabilize before reading. 
+
+
+                Usage:  SensorCluster.analogSensorPower("high")
+                OR      SensorCluster.analogSensorPower("low")
+
+            This method should be removed if an off-board GPIO extender is used.
+        """
+        if string == "high":
+            GPIO.setmode(GPIO.BOARD)  # Use board numbering
+            GPIO.setup(cls.analogGPIOPin, GPIO.OUT)
+            GPIO.output(cls.analogGPIOPin, GPIO.HIGH)
+        elif string == "low":
+            GPIO.setmode(GPIO.BOARD)  # Use board numbering
+            GPIO.setup(cls.analogGPIOPin, GPIO.OUT)
+            GPIO.output(cls.analogGPIOPin, GPIO.LOW)
+        else:
+            return "Invalid usage. Try analogSensorPower(\"high\")"
+        sleep(.1)  # Force the user to wait for the sensors to stabilize.
+
+    def __init__(self, ID, mux_addr):
         # Initializes cluster, enumeration, and sets up address info
         self.ID = ID  # Plant number specified by caller
-        self.temp_addr = temp_addr
-        self.humidity_addr = humidity_addr
-        self.humidity_chan = humidity_chan
-        self.lux_addr = lux_addr
-        self.lux_mux_chan = lux_mux_chan
-        self.adc_addr = adc_addr
         self.mux_addr = mux_addr
         self.temp = 0
         self.humidity = 0
         self.lux = 0
         self.soil_moisture = 0
         self.acidity = 0
-        SensorCluster.ClusterCount += 1
+        self.timestamp = time()  # record time at instantiation
+        cls.ClusterCount += 1
 
     def updateTemp(self, bus):
         # Method will update the temp attribute and return the value to the
         # caller
         DEVICE_TEMP_CMD = 0x00  # Command to read temperature
+        TCA_select(bus, self.mux_addr, cls.temp_chan)
         self.temp = bus.read_byte_data(self.temp_addr, DEVICE_TEMP_CMD)
         # print "Current temperature for Plant " + str(self.num) + "is " +
         # str(temp)
@@ -57,24 +90,21 @@ class SensorCluster(object):
         LUX_VALID_MASK = 0b10000000
         LUX_CHORD_MASK = 0b01110000
         LUX_STEP_MASK = 0b00001111
-        LUX_DEVICE_ADDR = self.lux_addr
 
         # Select correct I2C mux channel on TCA module
-        print("Selecting channel " + str(self.lux_mux_chan))
-        TCA_select(bus, self.mux_addr, self.lux_mux_chan)
-
+        TCA_select(bus, self.mux_addr, cls.lux_chan)
         # Make sure lux sensor is powered up.
-        bus.write_byte(LUX_DEVICE_ADDR, LUX_PWR_ON)
-        lux_on = bus.read_byte_data(LUX_DEVICE_ADDR, LUX_PWR_ON)
+        bus.write_byte(cls.lux_addr, LUX_PWR_ON)
+        lux_on = bus.read_byte_data(cls.lux_addr, LUX_PWR_ON)
 
         # Check for successful powerup
         if (lux_on == LUX_PWR_ON):
             # Send command to initiate ADC on each channel
             # Read each channel after the new data is ready
             print("Reading lux sensor data")
-            bus.write_byte(LUX_DEVICE_ADDR, LUX_READ_CH0)
+            bus.write_byte(cls.lux_addr, LUX_READ_CH0)
             print("....")
-            adc_ch0 = bus.read_byte_data(LUX_DEVICE_ADDR, LUX_READ_CH0)
+            adc_ch0 = bus.read_byte_data(cls.lux_addr, LUX_READ_CH0)
             # Calculate ch0 metrics
             ch0_valid = adc_ch0 & LUX_VALID_MASK
             if (ch0_valid == 0):
@@ -90,8 +120,8 @@ class SensorCluster(object):
                 # print "adc_ch0 = " + str(adc_ch0)
                 # print "adc_ch1 counts = " + str(ch0_count_val)
                 # Calculate ch1 metrics
-                bus.write_byte(LUX_DEVICE_ADDR, LUX_READ_CH1)
-                adc_ch1 = bus.read_byte_data(LUX_DEVICE_ADDR, LUX_READ_CH1)
+                bus.write_byte(cls.lux_addr, LUX_READ_CH1)
+                adc_ch1 = bus.read_byte_data(cls.lux_addr, LUX_READ_CH1)
                 ch1_valid = adc_ch1 & LUX_VALID_MASK
                 # print "adc_ch1 = " + str(adc_ch1)
             if (ch1_valid == 0):
@@ -117,28 +147,21 @@ class SensorCluster(object):
             # return False
 
     def updateHumidity(self, bus):
-        print("Attempting to read humidity..........")
-        tries = 0
+        print("Reading Humidity...")
         # Create mask for STATUS (first two bits of 64 bit wide result)
         STATUS = 0b11 << 6
-        HUMIDITY = 0b11111111111111  # Mask for humidity data
-        TEMP = 0b11111111111111 << 2
         # Currently needs work. Inserting dummy for now.
-        TCA_select(bus, self.mux_addr, self.humidity_chan)
-        bus.write_quick(self.humidity_addr)  # Begin conversion
-        sleep(.35)
+        TCA_select(bus, self.mux_addr, cls.humidity_chan)
+        bus.write_quick(cls.humidity_addr)  # Begin conversion
+        sleep(.25)
         for i in range(3):
             # wait 100ms to make sure the conversion takes place.
-            data = bus.read_i2c_block_data(self.humidity_addr, 0, 4)
+            data = bus.read_i2c_block_data(cls.humidity_addr, 0, 4)
             status = (data[0] & STATUS) >> 6
-            print("Humidity sensor returned status : " + str(status))
-            if status == 0 or status == 1: 
-                humidity = ((data[0] & 0x3f) << 8) + data[1]
-                #temp = data & TEMP >> 2
-                # Normalize to relative humidity
-                self.humidity = humidity*float('6.1e-3')
-                # Temperature is ignored for now pending a successful block
-                # read.
+            if status == 0 or status == 1:
+                humidity = round((((data[0] & 0x3f) << 8) |
+                                  data[1]) * 100.0 / (2**14 - 1), 3)
+                self.humidity = humidity
                 return True
         print("Failed to update humidity. Check module connections")
         return False
@@ -146,12 +169,14 @@ class SensorCluster(object):
     def updateSoilMoisture(self, bus):
         # Needs a lot of work. Inserting dummy.
         # This method will work off of the ADC module
+        TCA_select(bus, self.mux_addr, cls.adc_chan)
         self.moisture = 50
         return True
 
     def updateAcidity(self, bus):
         # Needs a lot of work. Inserting dummy.
         # This method will work off of the ADC module.
+        TCA_select(bus, self.mux_addr, cls.adc_chan)
         self.acidity = 50
         return True
 
@@ -162,6 +187,9 @@ class SensorCluster(object):
         self.updateHumidity(bus)
         self.updateSoilMoisture(bus)
         self.updateAcidity(bus)
+        self.timestamp = time()
+        self.saveAllSensors()
+        TCA_select(bus, self.mux_addr, "off")  # disable sensor module
 
     def saveAllSensors(self):
         print("Updating sensor data")
@@ -179,3 +207,5 @@ class SensorCluster(object):
                 build(sensor_value=self.acidity).save()
             plant.sensor_data_points.temperature(). \
                 build(sensor_value=self.temp).save()
+        else:
+            print("Plant object was not successfully created")
