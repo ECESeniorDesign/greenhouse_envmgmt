@@ -40,7 +40,7 @@ def TCA_select(bus, addr, channel):
     return status
 
 
-def ADC_start(bus, addr, channel):
+def get_ADC_value(bus, addr, channel):
     """
     This method selects a channel and initiates conversion
 
@@ -48,3 +48,58 @@ def ADC_start(bus, addr, channel):
 
     """
     print("The ADC is not yet configured")
+
+
+def GPIO_add_to_mask(pin, value):
+    """
+    Method for setting individual pin values using the io
+        extender
+    Receives a bus object, a device address,
+        a pin (as a string IE: A1) and a value.
+
+    Usage: GPIO_out(bus, addr, "A1", "high")
+    """
+    if value == "high":
+        value = 1
+    else:
+        value = 0
+
+    return value << pin
+
+
+
+
+
+def GPIO_update_output(bus, addr, bank, mask):
+    """
+    Method for controlling the GPIO expander via I2C
+        which accepts a bank - A(0) or B(1) and a mask
+        to push to the pins of the expander.
+
+    The method also assumes the the expander is operating
+        in sequential mode. If this mode is not used,
+        the register addresses will need to be changed.
+
+    Usage:
+    GPIO_out(bus, GPIO_addr, 0, 0b00011111)
+        This call would turn on A0 through A4. 
+
+    """
+    IODIR_map = [0x00, 0x01]
+    OutputMap = [0x14, 0x15]
+
+    if (bank != 0) and (bank != 1):
+        print()
+        raise Expection("An invalid IO bank has been selected")
+
+    IO_direction = IODIR_map[bank]
+    OutputRegister = OutputMap[bank]
+
+    currentStatus = bus.read_byte_data(addr, OutputRegister)
+    if currentStatus == mask:
+        # This means nothing needs to happen
+        return True
+
+    bus.write_byte_data(addr, IO_direction, mask)
+    bus.write_byte_data(addr, OutputRegister, mask)
+

@@ -10,8 +10,7 @@
 #   in order to use these classes.
 import smbus
 import models
-from i2c_utility import TCA_select, ADC_control
-import RPi.GPIO as GPIO
+from i2c_utility import TCA_select, get_ADC_value, GPIO_out
 from time import sleep, time  # needed to force a delay in humidity module
 from math import e
 
@@ -189,7 +188,12 @@ class SensorCluster(object):
         self.updateAcidity(bus)
         self.timestamp = time()
         self.saveAllSensors()
-        TCA_select(bus, self.mux_addr, "off")  # disable sensor module
+        # disable sensor module
+        tca_status = TCA_select(bus, self.mux_addr, "off")
+        if tca_status != 0:
+            raise Exception(
+                "Bus multiplexer was unable to switch off to prevent conflicts")
+
 
     def saveAllSensors(self):
         print("Updating sensor data")
