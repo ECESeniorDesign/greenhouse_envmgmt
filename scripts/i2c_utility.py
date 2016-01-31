@@ -50,26 +50,6 @@ def get_ADC_value(bus, addr, channel):
     print("The ADC is not yet configured")
 
 
-def GPIO_add_to_mask(pin, value):
-    """
-    Method for setting individual pin values using the io
-        extender
-    Receives a bus object, a device address,
-        a pin (as a string IE: A1) and a value.
-
-    Usage: GPIO_out(bus, addr, "A1", "high")
-    """
-    if value == "high":
-        value = 1
-    else:
-        value = 0
-
-    return value << pin
-
-
-
-
-
 def GPIO_update_output(bus, addr, bank, mask):
     """
     Method for controlling the GPIO expander via I2C

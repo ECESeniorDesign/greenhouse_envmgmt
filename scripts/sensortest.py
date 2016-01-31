@@ -3,26 +3,32 @@
 import smbus
 import i2c_utility
 from sensor_models import SensorCluster
+from controls import ControlCluster
 import sensor_models
-sensor_models.models.lazy_record.connect_db("temp.db")
-bus = smbus.SMBus(1)
+#sensor_models.models.lazy_record.connect_db("temp.db")
+try:
+	bus = smbus.SMBus(1)
+except IOError:
+	print("Cannot open bus. Ignore if using a virtual environment")
 
 
-plant0 = SensorCluster(ID=0, temp_addr=0x48, humidity_addr=0x27, humidity_chan=2,
-                       lux_addr=0x39, lux_mux_chan=0, adc_addr=0x00, mux_addr=0x70)
-plant1 = SensorCluster(ID=1, temp_addr=0x48, humidity_addr=0x27, humidity_chan=2,
-                       lux_addr=0x39, lux_mux_chan=1, adc_addr=0x00, mux_addr=0x70)
+plant1_sense = SensorCluster(ID=1, mux_addr=0x70)
+plant2_sense = SensorCluster(ID=2, mux_addr=0x70)
 print("Plant sensor clusters have successfully been created with IDs: " +
-      str(plant0.ID) + "," + str(plant1.ID))
+      str(plant1_sense.ID) + "," + str(plant2_sense.ID))
 
+plant1_control = ControlCluster(1)
+plant2_control = ControlCluster(2)
+print("Plant control clusters have been created with IDs: " + 
+		str(plant1_control.ID) + "," + str(plant2_control.ID))
 
 print("Updating sensor data...")
-if plant0.updateAllSensors(bus) == False:
+if plant1_sense.updateAllSensors(bus) == False:
     print("Plant 0 failed to update.")
-if plant1.updateAllSensors(bus) == False:
+if plant2_sense.updateAllSensors(bus) == False:
     print("Plant 1 failed to update")
 
-print("plant0 temperature is " + str(plant0.temp))
-print("plant0 lux is " + str(plant0.lux))
-print("plant1 lux is " + str(plant1.lux))
-print("plant humidity is " + str(plant0.humidity))
+print("plant0 temperature is " + str(plant1_sense.temp))
+print("plant0 lux is " + str(plant1_sense.lux))
+print("plant1 lux is " + str(plant2_sense.lux))
+print("plant humidity is " + str(plant1_sense.humidity))
