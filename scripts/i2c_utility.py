@@ -2,7 +2,6 @@
 # This file contains utility functions used to select
 # 	channels via the I2C Multiplexer or the ADC
 
-
 def TCA_select(bus, addr, channel):
     """
         This function will write to the control register of the
@@ -78,8 +77,9 @@ def GPIO_update_output(bus, addr, bank, mask):
     currentStatus = bus.read_byte_data(addr, OutputRegister)
     if currentStatus == mask:
         # This means nothing needs to happen
+        print("Current control status matches requested controls. " +
+              "No action is required.")
         return True
 
-    bus.write_byte_data(addr, IO_direction, mask)
+    bus.write_byte_data(addr, IO_direction, 0)
     bus.write_byte_data(addr, OutputRegister, mask)
-
