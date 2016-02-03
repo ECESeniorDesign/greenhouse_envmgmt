@@ -20,13 +20,14 @@ class SensorCluster(object):
     ClusterCount = 0
     analogGPIOPin = 13  # This should be changed based on the GPIO Scheme used.
     temp_addr = 0x48
-    temp_chan = 0
+    temp_chan = 3
     humidity_addr = 0x27
     humidity_chan = 1
     lux_addr = 0x39
-    lux_chan = 2
-    adc_addr = 0x00
-    adc_chan = 3
+    lux_chan = 0
+    adc_addr = 0x68
+    adc_chan = 2
+    moisture_chan = 1
 
     @classmethod
     def analogSensorPower(SensorCluster, string):
@@ -151,8 +152,10 @@ class SensorCluster(object):
             status = (data[0] & STATUS) >> 6
             if status == 0 or status == 1:
                 humidity = round((((data[0] & 0x3f) << 8) |
-                                  data[1]) * 100.0 / (2**14 - 1), 3)
+                                  data[1]) * 100.0 / (2**14 - 2), 3)
                 self.humidity = humidity
+                temp = (((data[2] << 8) | (data[3] & 0xfc)) >> 2) / (2**14 - 2) * 165 - 40
+                print("Humidity module temp is " + str(temp))
                 return True
         print("Failed to update humidity. Check module connections")
         return False
@@ -161,18 +164,33 @@ class SensorCluster(object):
         # Needs a lot of work. Inserting dummy.
         # This method will work off of the ADC module
         TCA_select(bus, self.mux_addr, SensorCluster.adc_chan)
-        self.moisture = 50
+        moisture = get_ADC_value(
+            bus, SensorCluster.adc_addr, SensorCluster.moisture_chan)
+        # This will need to be mapped to 0-1 values
+        #   based on moisture levels later on
+        if (moisture != 0 and moisture<.985):
+            self.soil_moisture = moisture
+        else:
+            print("The soil moisture meter is either off or unplugged.")
         return True
 
     def updateAcidity(self, bus):
         # Needs a lot of work. Inserting dummy.
         # This method will work off of the ADC module.
         TCA_select(bus, self.mux_addr, SensorCluster.adc_chan)
-        self.acidity = 50
+        self.acidity = "50 (Hardcoded Value)"
         return True
 
     def updateAllSensors(self, bus):
-        print("Updating sensor data...")
+        """ Method runs through all sensor modules and updates 
+            to the latest sensor values.
+
+        After running through each sensor module,
+        The sensor head (the I2C multiplexer), is disabled
+        in order to avoid address conflicts.
+        Usage:
+            plant_sensor_object.updateAllSensors(bus_object)
+        """
         self.updateTemp(bus)
         self.updateLux(bus)
         self.updateHumidity(bus)
@@ -191,17 +209,20 @@ class SensorCluster(object):
         print("Updating sensor data")
         # Saves all of the current sensor values
         # to the webservice Plant object
-        plant = models.Plant.for_slot(self.ID, raise_if_not_found=False)
-        if plant:
-            plant.sensor_data_points.light(). \
-                build(sensor_value=self.lux).save()
-            plant.sensor_data_points.water(). \
-                build(sensor_value=self.moisture).save()
-            plant.sensor_data_points.humidity(). \
-                build(sensor_value=self.humidity).save()
-            plant.sensor_data_points.acidity(). \
-                build(sensor_value=self.acidity).save()
-            plant.sensor_data_points.temperature(). \
-                build(sensor_value=self.temp).save()
-        else:
-            print("Plant object was not successfully created")
+        try:
+            plant = models.Plant.for_slot(self.ID, raise_if_not_found=False)
+            if plant:
+                plant.sensor_data_points.light(). \
+                    build(sensor_value=self.lux).save()
+                plant.sensor_data_points.water(). \
+                    build(sensor_value=self.moisture).save()
+                plant.sensor_data_points.humidity(). \
+                    build(sensor_value=self.humidity).save()
+                plant.sensor_data_points.acidity(). \
+                    build(sensor_value=self.acidity).save()
+                plant.sensor_data_points.temperature(). \
+                    build(sensor_value=self.temp).save()
+            else:
+                print("Plant object was not successfully created")
+        except:
+            print("Unable to store plant data")

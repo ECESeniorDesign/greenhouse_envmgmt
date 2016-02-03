@@ -54,7 +54,7 @@ print("Now testing second control module....")
 plant2_control.manage_lights("on")
 plant2_control.manage_fan("on")
 plant2_control.manage_valve("on")
-print("Sending command to turn on all control units")
+print("Sending command to turn on all plant 2 controls")
 i2c_utility.GPIO_update_output(
     bus, plant2_control.IOexpander,
     plant2_control.bank,
@@ -75,3 +75,8 @@ i2c_utility.GPIO_update_output(
     bus, plant2_control.IOexpander,
     plant2_control.bank,
     ControlCluster.bank_mask[plant2_control.bank])
+
+print("Turning off everything.")
+i2c_utility.GPIO_update_output(
+	bus, plant2_control.IOexpander,
+	 0, 0)
