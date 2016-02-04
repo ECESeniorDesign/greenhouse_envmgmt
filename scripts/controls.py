@@ -1,6 +1,7 @@
 #!/usr/bin/python
 from i2c_utility import GPIO_update_output, get_ADC_value
 from operator import itemgetter
+from math import pi
 
 
 class ControlCluster(object):
@@ -21,6 +22,31 @@ class ControlCluster(object):
     GPIOdict = []
     pumpPin = 0  # Pin A0 is assigned to the
     pumpBank = 0
+    current_volume = 0
+
+    @classmethod
+    def get_tank_volume(cls, bus):
+        """ This method uses the ADC on the control module to measure
+            the current water tank level and returns the water volume
+            remaining in the tank.
+        """
+        # ----------
+        # These values should be updated based on the real system parameters
+        tank_height = 10
+        vref = 5  # voltage reference
+        rref = 10000  # Reference resistor (or pot)
+        # ----------
+        for i in range(5):
+            # Take five readings and do an average
+            # Fetch value from ADC (0x69 - ch1)
+            val = get_ADC_value(bus, 0x69, 1) + val
+        water_sensor_avg = val / 5
+        water_sensor_resistance = rref / (water_sensor_avg - 1)
+        depth_cm = water_sensor_resistance / 59  # sensor is ~59 ohms/cm
+        cls.water_remaining = depth_cm/tank_height
+        # Return the current depth in case the user is interested in
+        #   that parameter alone. (IE for automatic shut-off)
+        return depth_cm
 
     def form_GPIO_map(self):
         """ This method creates a dictionary to map plant IDs to
@@ -61,7 +87,7 @@ class ControlCluster(object):
             raise Exception("Pins A0 and A1 are reserved for other functions")
 
         self.GPIO_dict = [{'ID': self.ID, 'bank': self.bank,
-                      'fan': self.fan, 'valve': self.valve, 'light': self.light}]
+                           'fan': self.fan, 'valve': self.valve, 'light': self.light}]
 
         # Append dictionary to class and resort dictionary by ID # if needed
         ControlCluster.GPIOdict.append(self.GPIO_dict)
@@ -80,7 +106,7 @@ class ControlCluster(object):
                 self.bank] = (1 << self.light) | (ControlCluster.bank_mask[self.bank])
         elif operation == "off":
             ControlCluster.bank_mask[
-                self.bank]= ~(1 << self.light) & (ControlCluster.bank_mask[self.bank])
+                self.bank] = ~(1 << self.light) & (ControlCluster.bank_mask[self.bank])
         else:
             raise Exception("Invalid operation passed to light controller")
         return True
@@ -94,7 +120,7 @@ class ControlCluster(object):
                 self.bank] = (1 << self.fan) | (ControlCluster.bank_mask[self.bank])
         elif operation == "off":
             ControlCluster.bank_mask[
-                self.bank]= ~(1 << self.fan) & (ControlCluster.bank_mask[self.bank])
+                self.bank] = ~(1 << self.fan) & (ControlCluster.bank_mask[self.bank])
         else:
             raise Exception("Invalid operation passed to fan controller")
         return True
@@ -112,14 +138,14 @@ class ControlCluster(object):
                 self.bank] = (1 << self.valve) | (ControlCluster.bank_mask[self.bank])
         elif operation == "off":
             ControlCluster.bank_mask[
-                self.bank]= ~(1 << self.valve) & (ControlCluster.bank_mask[self.bank])
+                self.bank] = ~(1 << self.valve) & (ControlCluster.bank_mask[self.bank])
         else:
             raise Exception("Invalid operation passed to valve controller")
         return True
 
     def __init__(self, ID):
-        self.ID=ID
+        self.ID = ID
         self.form_GPIO_map()
         # Create dynamically sized cluster data lists
-        ControlCluster.pumpOperation=[0] * len(ControlCluster.GPIOdict)
-        ControlCluster.bank_mask=[0] * len(ControlCluster.GPIOdict)
+        ControlCluster.pumpOperation = [0] * len(ControlCluster.GPIOdict)
+        ControlCluster.bank_mask = [0] * len(ControlCluster.GPIOdict)

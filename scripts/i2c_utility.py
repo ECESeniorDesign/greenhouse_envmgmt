@@ -47,6 +47,7 @@ def get_ADC_value(bus, addr, channel):
         One shot conversions are used, meaning a wait period is needed
         in order to acquire new data. This is done via a constant poll
         of the ready bit.
+    Upon completion, a ratiomeric value is returned to the caller.
 
     Usage - ADC_start(bus, SensorCluster.ADC_addr, channel_to_read)
 
@@ -55,6 +56,10 @@ def get_ADC_value(bus, addr, channel):
         INIT = 0b10000000
     elif channel == 2:
         INIT = 0b10100000
+    elif channel == 3:
+        INIT = 0b11000000
+    elif channel == 4:
+        INIT = 0b11100000
     bus.write_byte(addr, INIT)
     data = bus.read_i2c_block_data(addr, 0, 3)
     status = (data[2] & 0b10000000) >> 7
@@ -66,8 +71,7 @@ def get_ADC_value(bus, addr, channel):
     if (sign == 1):
         val = (val ^ 0x3ff) + 1  # compute 2s complement for 12 bit val
     # Convert val to a ratiomerical ADC reading
-    # 12 bit ADC implies resoluation value of 4095
-    return float(val) / float(2047)
+    return float(val) / float(4095)
 
 
 def GPIO_update_output(bus, addr, bank, mask):
