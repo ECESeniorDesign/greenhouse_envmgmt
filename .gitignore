@@ -6,3 +6,8 @@ hardware/kicad/_saved_sensor_module.sch
 hardware/kicad/sensor_module.xml
 hardware/kicad/sensor_module-rescue.lib
 *.xml
+*.mod
+hardware/mod/3d/AB2_SO08.wrl
+*.lib
+*.stl
+hardware/mod/3d/AB2_SO08.x3d
