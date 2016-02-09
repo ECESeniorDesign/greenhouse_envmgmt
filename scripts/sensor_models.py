@@ -9,6 +9,7 @@
 # Note that SMBus must be imported and initiated
 #   in order to use these classes.
 import smbus
+# models is in the greenouse-webservice repository under app/
 import models
 from controls import ControlCluster
 from i2c_utility import TCA_select, get_ADC_value
@@ -231,16 +232,12 @@ class SensorCluster(object):
         try:
             plant = models.Plant.for_slot(self.ID, raise_if_not_found=False)
             if plant:
-                plant.sensor_data_points.light(). \
-                    build(sensor_value=self.lux).save()
-                plant.sensor_data_points.water(). \
-                    build(sensor_value=self.moisture).save()
-                plant.sensor_data_points.humidity(). \
-                    build(sensor_value=self.humidity).save()
-                plant.sensor_data_points.acidity(). \
-                    build(sensor_value=self.acidity).save()
-                plant.sensor_data_points.temperature(). \
-                    build(sensor_value=self.temp).save()
+                plant.record_sensor("light", self.lux)
+                plant.record_sensor("water", self.moisture)
+                plant.record_sensor("humidity", self.humidity)
+                # Might get rid of this one
+                plant.record_sensor("acidity", self.acidity)
+                plant.record_sensor("temperature", self.temp)
             else:
                 print("Plant object was not successfully created")
         except:
