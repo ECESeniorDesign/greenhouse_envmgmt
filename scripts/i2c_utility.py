@@ -74,7 +74,7 @@ def get_ADC_value(bus, addr, channel):
     return float(val) / float(4095)
 
 
-def IO_expander_output(bus, addr, bank, mask):
+def GPIO_update_output(bus, addr, bank, mask):
     """
     Method for controlling the GPIO expander via I2C
         which accepts a bank - A(0) or B(1) and a mask
@@ -90,16 +90,16 @@ def IO_expander_output(bus, addr, bank, mask):
 
     """
     IODIR_map = [0x00, 0x01]
-    output_map = [0x14, 0x15]
+    OutputMap = [0x14, 0x15]
 
     if (bank != 0) and (bank != 1):
         print()
         raise Expection("An invalid IO bank has been selected")
 
     IO_direction = IODIR_map[bank]
-    output_reg = output_map[bank]
+    OutputRegister = OutputMap[bank]
 
-    currentStatus = bus.read_byte_data(addr, output_reg)
+    currentStatus = bus.read_byte_data(addr, OutputRegister)
     if currentStatus == mask:
         # This means nothing needs to happen
         print("Current control status matches requested controls. " +
@@ -107,4 +107,4 @@ def IO_expander_output(bus, addr, bank, mask):
         return True
 
     bus.write_byte_data(addr, IO_direction, 0)
-    bus.write_byte_data(addr, output_reg, mask)
+    bus.write_byte_data(addr, OutputRegister, mask)
