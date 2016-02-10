@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import sys
+sys.path.append("/home/pi/git/greenhouse-webservice/")
 import smbus
 import i2c_utility
 from sensor_models import SensorCluster

@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from i2c_utility import GPIO_update_output, get_ADC_value
+from i2c_utility import IO_expander_output, get_ADC_value
 from operator import itemgetter
 from math import pi
 
@@ -17,6 +17,12 @@ class ControlCluster(object):
 
         Usage: plant1Control = ControlCluster(1)
             This will create the first plant control unit.
+
+            Turning on control units
+                plant1Control.manage_fan("on")
+                plant1Control.manage_light("off")
+                i2c_utility.GPIO_update_output(
+                    bus, plant1Control.bank, )
 
     """
     GPIOdict = []
@@ -47,6 +53,19 @@ class ControlCluster(object):
         # Return the current depth in case the user is interested in
         #   that parameter alone. (IE for automatic shut-off)
         return depth_cm
+
+
+    def update(self, bus):
+        """ This method exposes a more simple interface to the IO module
+        Regardless of what the control instance contains, this method
+        will transmit the queued IO commands to the IO expander
+
+        Usage: plant1Control.update(bus)
+        """
+        i2c_utility.IO_expander_output(
+            bus, self.IOexpander,
+            self.bank,
+            ControlCluster.bank_mask[self.bank])
 
     def form_GPIO_map(self):
         """ This method creates a dictionary to map plant IDs to
@@ -79,12 +98,12 @@ class ControlCluster(object):
             self.light = 5
             self.valve = 6
         else:
-            raise Exception(
+            raise InvalidIOMap(
                 "Mapping not available for ID: " + str(self.ID))
 
         # Check to make sure reserved pins are not requested
         if (self.bank == 0) and (min(self.fan, self.light, self.valve) < 2):
-            raise Exception("Pins A0 and A1 are reserved for other functions")
+            raise InvalidIOMap("Pins A0 and A1 are reserved for other functions")
 
         self.GPIO_dict = [{'ID': self.ID, 'bank': self.bank,
                            'fan': self.fan, 'valve': self.valve, 'light': self.light}]
@@ -108,7 +127,7 @@ class ControlCluster(object):
             ControlCluster.bank_mask[
                 self.bank] = ~(1 << self.light) & (ControlCluster.bank_mask[self.bank])
         else:
-            raise Exception("Invalid operation passed to light controller")
+            raise IOExpanderFailure("Invalid operation passed to light controller")
         return True
 
     def manage_fan(self, operation):
@@ -122,7 +141,7 @@ class ControlCluster(object):
             ControlCluster.bank_mask[
                 self.bank] = ~(1 << self.fan) & (ControlCluster.bank_mask[self.bank])
         else:
-            raise Exception("Invalid operation passed to fan controller")
+            raise IOExpanderFailure("Invalid operation passed to fan controller")
         return True
 
     def manage_valve(self, operation):
@@ -140,12 +159,18 @@ class ControlCluster(object):
             ControlCluster.bank_mask[
                 self.bank] = ~(1 << self.valve) & (ControlCluster.bank_mask[self.bank])
         else:
-            raise Exception("Invalid operation passed to valve controller")
+            raise IOExpanderFailure("Invalid operation passed to valve controller")
         return True
 
     def __init__(self, ID):
         self.ID = ID
         self.form_GPIO_map()
-        # Create dynamically sized cluster data lists
+        # Create dynamically sized lists to hold IO bank masks
         ControlCluster.pumpOperation = [0] * len(ControlCluster.GPIOdict)
         ControlCluster.bank_mask = [0] * len(ControlCluster.GPIOdict)
+
+class IOExpanderFailure(Exception):
+    pass
+
+class InvalidIOMap(Exception):
+    pass
