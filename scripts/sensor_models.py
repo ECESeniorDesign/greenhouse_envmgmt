@@ -174,7 +174,7 @@ class SensorCluster(object):
         try:
             self.update_soil_moisture(bus)
         except SensorError:
-            print("Soil sensor is disabled or turned off.")
+            # This could be handled with a repeat request later.
             pass
         self.timestamp = time()
         # disable sensor module
@@ -196,7 +196,7 @@ class SensorCluster(object):
             plant.record_sensor(sensor_name="temperature",
                                 sensor_value=self.temp)
         else:
-            print("Could not save sensor values.")
+            raise SensorError("Could not save sensor values.")
 
     @classmethod
     def update_all_sensors(cls, bus):
