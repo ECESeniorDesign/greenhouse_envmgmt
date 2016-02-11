@@ -14,3 +14,4 @@ hardware/mod/3d/AB2_SO08.x3d
 hardware/kicad
 hardware/project
 *.pyc
+scripts/.~lock.test_log.txt#
