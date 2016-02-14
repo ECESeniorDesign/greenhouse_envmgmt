@@ -108,3 +108,35 @@ def IO_expander_output(bus, addr, bank, mask):
 
     bus.write_byte_data(addr, IO_direction, 0)
     bus.write_byte_data(addr, output_reg, mask)
+
+
+def import_i2c_addr(bus, opt=None):
+    """ import_i2c_addresses will return a list of the
+            currently connected I2C devices.
+
+        This can be used a means to automatically detect
+            the number of connected sensor modules.
+        Modules are between int(112) and int(119)
+    """
+
+    i2c_list = []
+    for device in range(128):
+        try:
+            bus.read_byte(device)
+            i2c_list.append((device))
+        except IOError:
+            pass
+
+    if opt == "sensors":
+        sensor_list = []
+        for module in range(112,120):
+            try:
+                indx = i2c_list.index(module)
+                sensor_list.append(module)
+            except ValueError:
+                pass
+        return sensor_list
+
+    else:
+        return i2c_list
+
