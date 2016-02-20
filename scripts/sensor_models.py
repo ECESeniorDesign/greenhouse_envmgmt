@@ -54,63 +54,46 @@ class SensorCluster(object):
         self.acidity = 0
         self.timestamp = time()  # record time at instantiation
         self._list.append(self)
+        self.update_count = 0;
 
     def update_lux(self, bus):
-        # This will currently only work with one lux sensor, as the
-        # i2c multiplexer still needs to be implemented.
+        """ Communicates with the TSL2550D light sensor and returns a 
+            lux value. 
+
+        Note that this method contains approximately 1 second of total delay time.
+            This delay is necessary in order to obtain full resolution
+            compensated lux values.
+
+        Alternatively, the device could be put in extended mode, 
+            which drops some resolution in favor of shorter delays.
+
+        """
         DEVICE_REG_OUT = 0x1d
         LUX_PWR_ON = 0x03
         LUX_PWR_OFF = 0x00
         LUX_READ_CH0 = 0x43
         LUX_READ_CH1 = 0x83
-        LUX_VALID_MASK = 0b10000000
-        LUX_CHORD_MASK = 0b01110000
-        LUX_STEP_MASK = 0b00001111
-
         # Select correct I2C mux channel on TCA module
         TCA_select(bus, self.mux_addr, SensorCluster.lux_chan)
         # Make sure lux sensor is powered up.
         bus.write_byte(SensorCluster.lux_addr, LUX_PWR_ON)
         lux_on = bus.read_byte_data(SensorCluster.lux_addr, LUX_PWR_ON)
-
         # Check for successful powerup
         if (lux_on == LUX_PWR_ON):
             # Send command to initiate ADC on each channel
             # Read each channel after the new data is ready
             bus.write_byte(SensorCluster.lux_addr, LUX_READ_CH0)
-            adc_ch0 = bus.read_byte_data(SensorCluster.lux_addr, LUX_READ_CH0)
-            # Calculate ch0 metrics
-            ch0_valid = adc_ch0 & LUX_VALID_MASK
-            if (ch0_valid == 0):
-                raise SensorError("The lux sensor has returned invalid data")
-            else:
-                ch0_step_num = (adc_ch0 & LUX_STEP_MASK)
-                # Shift to normalize value
-                ch0_chord = (adc_ch0 & LUX_CHORD_MASK) >> 4
-                ch0_step_val = int(16.5 * ((2**ch0_step_num) - 1))
-                ch0_count_val = ch0_chord + (ch0_step_val * ch0_step_num)
-                # print "adc_ch0 = " + str(adc_ch0)
-                # print "adc_ch1 counts = " + str(ch0_count_val)
-                # Calculate ch1 metrics
-                bus.write_byte(SensorCluster.lux_addr, LUX_READ_CH1)
-                adc_ch1 = bus.read_byte_data(
-                    SensorCluster.lux_addr, LUX_READ_CH1)
-                ch1_valid = adc_ch1 & LUX_VALID_MASK
-                # print "adc_ch1 = " + str(adc_ch1)
-            if (ch1_valid == 0):
-                raise SensorError("The lux sensor has returned invalid data")
-            else:
-                ch1_step_num = (adc_ch1 & LUX_STEP_MASK)
-                ch1_chord = (adc_ch1 & LUX_CHORD_MASK) >> 4
-                ch1_step_val = int(16.5 * ((2**ch1_step_num) - 1))
-                ch1_count_val = ch1_chord + (ch1_step_val * ch1_step_num)
-                # calculate lux value
-                R = ch1_count_val / (ch0_count_val - ch1_count_val)
-                lux_level = ((adc_ch0 & ~LUX_VALID_MASK) -
-                             (adc_ch1 & ~LUX_VALID_MASK)) \
-                    * .39 * e**(-.181 * (R**2))
-                self.lux = round(lux_level, 3)
-                return TCA_select(bus, self.mux_addr, "off")
+            sleep(.5)
+            adc_ch0 = bus.read_byte(SensorCluster.lux_addr)
+            count0 = get_lux_count(adc_ch0)
+            bus.write_byte(SensorCluster.lux_addr, LUX_READ_CH1)
+            sleep(.5)
+            adc_ch1 = bus.read_byte(SensorCluster.lux_addr)
+            count1 = get_lux_count(adc_ch1)
+            ratio = count1 / (count0 - count1)
+            lux = (count0 - count1) * .39 * e**(-.181*(ratio**2))
+            self.lux = round(lux, 3)
+            return TCA_select(bus, self.mux_addr, "off")
         else:
             raise SensorError("The lux sensor is powered down.")
 
@@ -145,7 +128,7 @@ class SensorCluster(object):
                 This may need to be adjusted if a different sensor is used
         """
         SensorCluster.analog_sensor_power(bus,"on") # turn on sensor
-        sleep(.5)
+        sleep(.2)
         TCA_select(bus, self.mux_addr, SensorCluster.adc_chan)
         moisture = get_ADC_value(
             bus, SensorCluster.adc_addr, SensorCluster.moisture_chan)
@@ -159,7 +142,7 @@ class SensorCluster(object):
                 "The soil moisture meter is either unplugged or powered off.")
         return status
 
-    def update_instance_sensors(self, bus):
+    def update_instance_sensors(self, bus, opt=None):
         """ Method runs through all sensor modules and updates 
             to the latest sensor values.
         After running through each sensor module,
@@ -168,14 +151,15 @@ class SensorCluster(object):
         Usage:
             plant_sensor_object.updateAllSensors(bus_object)
         """
-
+        self.update_count += 1
         self.update_lux(bus)
         self.update_humidity_temp(bus)
-        try:
-            self.update_soil_moisture(bus)
-        except SensorError:
-            # This could be handled with a repeat request later.
-            pass
+        if opt == "all":
+            try:
+                self.update_soil_moisture(bus)
+            except SensorError:
+                # This could be handled with a repeat request later.
+                pass
         self.timestamp = time()
         # disable sensor module
         tca_status = TCA_select(bus, self.mux_addr, "off")
@@ -241,6 +225,27 @@ class SensorCluster(object):
                            ControlCluster.bank_mask[cls.power_bank])
 
 
+def get_lux_count(lux_byte):
+    """ Method to convert data from the TSL2550D lux sensor
+    into more easily usable ADC count values.
+
+    """
+    LUX_VALID_MASK = 0b10000000
+    LUX_CHORD_MASK = 0b01110000
+    LUX_STEP_MASK = 0b00001111
+    valid = lux_byte & LUX_VALID_MASK
+    if valid != 0:
+        step_num = (lux_byte & LUX_STEP_MASK)
+        # Shift to normalize value
+        chord_num = (lux_byte & LUX_CHORD_MASK) >> 4
+        step_val = 2**chord_num
+        chord_val = int(16.5 * (step_val - 1))
+        count = chord_val + step_val*step_num
+        return count
+    else:
+        raise SensorError("Invalid lux sensor data.")
+
+
 class SensorError(Exception):
     """ Non-fatal
         Implies that a sensor is either turned off
@@ -258,3 +263,4 @@ class I2CBusError(Exception):
             after successive updates. 
     """
     pass
+

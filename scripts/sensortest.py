@@ -1,18 +1,19 @@
 #!/usr/bin/python
-import sys
-sys.path.append("/home/pi/git/greenhouse-webservice/")
-import smbus
-import i2c_utility
-import app.models as models
-from app.config import DATABASE
-from sensor_models import SensorCluster, IterList
-from controls import ControlCluster
-from datetime import datetime as dt
-import sensor_models
-from time import sleep
-
 
 def test(runs=None):
+
+    import sys
+    sys.path.append("/home/pi/git/greenhouse-webservice/")
+    import smbus
+    import i2c_utility
+    import app.models as models
+    from app.config import DATABASE
+    from sensor_models import SensorCluster, IterList
+    from controls import ControlCluster
+    from datetime import datetime as dt
+    import sensor_models
+    from time import sleep
+    
     try:
         bus = smbus.SMBus(1)
     except IOError:
@@ -65,10 +66,10 @@ def test(runs=None):
           str(plant1_control.ID) + "," + str(plant2_control.ID))
 
     print("Updating sensor data for plant 1")
-    if plant1_sense.update_instance_sensors(bus) == False:
+    if plant1_sense.update_instance_sensors(bus, opt="all") == False:
         print("Plant 1 failed to update.")
     print("Updating sensor data for plant 2")
-    if plant2_sense.update_instance_sensors(bus) == False:
+    if plant2_sense.update_instance_sensors(bus, opt="all") == False:
         print("Plant 2 failed to update")
 
     print("Outputting sensor data to console...")
