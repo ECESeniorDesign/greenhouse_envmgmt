@@ -31,13 +31,13 @@ print("Plant 1 has dictionary " +
       str(ControlCluster.GPIOdict[plant1_control.ID - 1]))
 
 print("Testing control module methods by enabling all controls")
-plant1_control.manage_lights("on")
+plant1_control.manage_light("on")
 plant1_control.manage_fan("on")
 plant1_control.manage_valve("on")
 print("Control cluster contains mask A: " +
       str('{0:b}'.format(ControlCluster.bank_mask[plant1_control.bank])))
 print("Turning off plant 1 lights...")
-plant1_control.manage_lights("off")
+plant1_control.manage_light("off")
 print("Control cluster now contains bank mask " +
       str('{0:b}'.format(ControlCluster.bank_mask[plant1_control.bank])))
 
@@ -45,40 +45,49 @@ print("Control cluster now contains bank mask " +
 print("Sending mask to GPIO Extender Module to test functionality...")
 print(
     "Using " + str('{0:b}'.format(ControlCluster.bank_mask[plant1_control.bank])))
-i2c_utility.GPIO_update_output(
+i2c_utility.IO_expander_output(
     bus, plant1_control.IOexpander,
     plant1_control.bank,
     ControlCluster.bank_mask[plant1_control.bank])
 print("LEDs 4 and 6 should be turned on.")
-sleep(5)
+sleep(2)
 
 print("Now testing second control module....")
-plant2_control.manage_lights("on")
+plant2_control.manage_light("on")
 plant2_control.manage_fan("on")
 plant2_control.manage_valve("on")
 print("Sending command to turn on all plant 2 controls")
-i2c_utility.GPIO_update_output(
+i2c_utility.IO_expander_output(
     bus, plant2_control.IOexpander,
     plant2_control.bank,
     ControlCluster.bank_mask[plant2_control.bank])
 print("All three plant 2 control modules should be on")
-sleep(5)
+sleep(2)
 print("Turning off fan module...")
 plant2_control.manage_fan("off")
-i2c_utility.GPIO_update_output(
+i2c_utility.IO_expander_output(
     bus, plant2_control.IOexpander,
     plant2_control.bank,
     ControlCluster.bank_mask[plant2_control.bank])
 print("The light corresponding to the fan should be off")
-sleep(5)
+sleep(2)
 
 print("Sending duplicate command to test IO efficiency")
-i2c_utility.GPIO_update_output(
+i2c_utility.IO_expander_output(
     bus, plant2_control.IOexpander,
     plant2_control.bank,
     ControlCluster.bank_mask[plant2_control.bank])
 
-print("Turning off everything.")
-i2c_utility.GPIO_update_output(
-	bus, plant2_control.IOexpander,
-	 0, 0)
+
+print("Using batch update commands to test API")
+
+list1_on = ["light", "fan"]
+list2_on = ["light"]
+plant1_control.control(bus, on=list1_on)
+plant2_control.control(bus, on=list2_on)
+print("Module 1 has it's light and fan on.")
+print("Module 2 has it's light on")
+sleep(2)
+plant1_control.control(bus, off="light")
+print("Module 1's light has been turned off.")
+sleep(5)
