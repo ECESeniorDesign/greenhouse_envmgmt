@@ -30,56 +30,8 @@ print("There are " + str(len(ControlCluster.GPIOdict)) + " control modules")
 print("Plant 1 has dictionary " +
       str(ControlCluster.GPIOdict[plant1_control.ID - 1]))
 
-print("Testing control module methods by enabling all controls")
-plant1_control.manage_light("on")
-plant1_control.manage_fan("on")
-plant1_control.manage_valve("on")
-print("Control cluster contains mask A: " +
-      str('{0:b}'.format(ControlCluster.bank_mask[plant1_control.bank])))
-print("Turning off plant 1 lights...")
-plant1_control.manage_light("off")
-print("Control cluster now contains bank mask " +
-      str('{0:b}'.format(ControlCluster.bank_mask[plant1_control.bank])))
 
-
-print("Sending mask to GPIO Extender Module to test functionality...")
-print(
-    "Using " + str('{0:b}'.format(ControlCluster.bank_mask[plant1_control.bank])))
-i2c_utility.IO_expander_output(
-    bus, plant1_control.IOexpander,
-    plant1_control.bank,
-    ControlCluster.bank_mask[plant1_control.bank])
-print("LEDs 4 and 6 should be turned on.")
-sleep(2)
-
-print("Now testing second control module....")
-plant2_control.manage_light("on")
-plant2_control.manage_fan("on")
-plant2_control.manage_valve("on")
-print("Sending command to turn on all plant 2 controls")
-i2c_utility.IO_expander_output(
-    bus, plant2_control.IOexpander,
-    plant2_control.bank,
-    ControlCluster.bank_mask[plant2_control.bank])
-print("All three plant 2 control modules should be on")
-sleep(2)
-print("Turning off fan module...")
-plant2_control.manage_fan("off")
-i2c_utility.IO_expander_output(
-    bus, plant2_control.IOexpander,
-    plant2_control.bank,
-    ControlCluster.bank_mask[plant2_control.bank])
-print("The light corresponding to the fan should be off")
-sleep(2)
-
-print("Sending duplicate command to test IO efficiency")
-i2c_utility.IO_expander_output(
-    bus, plant2_control.IOexpander,
-    plant2_control.bank,
-    ControlCluster.bank_mask[plant2_control.bank])
-
-
-print("Using batch update commands to test API")
+print("Testing controls API")
 
 list1_on = ["light", "fan"]
 list2_on = ["light"]
@@ -90,4 +42,17 @@ print("Module 2 has it's light on")
 sleep(2)
 plant1_control.control(bus, off="light")
 print("Module 1's light has been turned off.")
-sleep(5)
+sleep(2)
+print("Sending duplicate command to test efficiency.")
+plant1_control.control(bus, off="light")
+print("Testing pump operation.")
+plant1_control.control(bus, on="pump")
+plant2_control.control(bus, on="pump")
+sleep(2)
+print("Turning off the pump")
+plant1_control.control(bus, off="pump")
+plant2_control.control(bus, off="pump")
+sleep(2)
+print("Turning off all devices")
+plant1_control.control(bus, off="all")
+plant2_control.control(bus, off="all")
