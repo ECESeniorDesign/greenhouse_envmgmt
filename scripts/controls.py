@@ -33,7 +33,7 @@ class ControlCluster(object):
     current_volume = 0
 
     @classmethod
-    def get_tank_volume(cls, bus):
+    def get_water_level(cls, bus):
         """ This method uses the ADC on the control module to measure
             the current water tank level and returns the water volume
             remaining in the tank.

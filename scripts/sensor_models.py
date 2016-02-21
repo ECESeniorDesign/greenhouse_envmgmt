@@ -191,14 +191,20 @@ class SensorCluster(object):
             raise SensorError("Could not save sensor values.")
 
     @classmethod
-    def update_all_sensors(cls, bus):
+    def update_all_sensors(cls, bus, opt=None):
         """ Method iterates over all SensorCluster objects and updates 
             each sensor value and saves the values to the plant record.
                 - Note that it must receive an open bus object.
-            Usage: updateAllSensors(bus)
+            Usage: 
+            Update all sensors exluding analog sensors that need power.
+            - update_all_sensors(bus)
+
+            Update all sensors including soil moisture.
+            - update_all_sensors(bus, "all")
+
         """
         for sensorobj in cls:
-            sensorobj.update_instance_sensors(bus)
+            sensorobj.update_instance_sensors(bus, opt)
             sensorobj.save_instance_sensors()
 
     @classmethod
