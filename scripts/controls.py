@@ -3,11 +3,13 @@ from i2c_utility import IO_expander_output, get_ADC_value
 from operator import itemgetter
 from math import pi
 
+
 class IterList(type):
-    """ Metaclass for iterating over sensor objects in a _list
+    """ Metaclass for iterating over control objects in a _list
     """
     def __iter__(cls):
         return iter(cls._list)
+
 
 class ControlCluster(object):
     """ This class serves as a control module for each plant's
@@ -46,7 +48,7 @@ class ControlCluster(object):
         """
         # Compute required # of IO expanders needed, clear mask variable.
         number_IO_expanders = ((len(cls._list) - 1) / 4) + 1
-        cls.master_mask = [0,0]*number_IO_expanders
+        cls.master_mask = [0, 0] * number_IO_expanders
         for ctrlobj in cls:
             cls.master_mask[ctrlobj.bank] |= ctrlobj.mask
             if ctrlobj.pump_request == 1:
@@ -68,9 +70,9 @@ class ControlCluster(object):
 
         if self.bank != ControlCluster.pump_bank:
             IO_expander_output(
-            bus, self.IOexpander,
-            ControlCluster.pump_bank,
-            ControlCluster.master_mask[ControlCluster.pump_bank])
+                bus, self.IOexpander,
+                ControlCluster.pump_bank,
+                ControlCluster.master_mask[ControlCluster.pump_bank])
 
     def form_GPIO_map(self):
         """ This method creates a dictionary to map plant IDs to
@@ -146,20 +148,13 @@ class ControlCluster(object):
         """
         Updates control module knowledge of pump requests.
         If any sensor module requests water, the pump will turn on.
-        Note that if this desire is not desired, one should verify
-            that all plants have set the pump_operation bit to 1.
 
         """
         if operation == "on":
-            ControlCluster.pump_operation[self.ID - 1] = 1
-        elif operation == "off":
-            ControlCluster.pump_operation[self.ID - 1] = 0
-        if 1 in ControlCluster.pump_operation:
-            # Turn the pump on
             self.controls["pump"] = "on"
-        else:
-            # Turn the pump off
+        elif operation == "off":
             self.controls["pump"] = "off"
+
         return True
 
     def manage(self, control, operation):
@@ -201,6 +196,7 @@ class ControlCluster(object):
 
         """
         controls = {"light", "valve", "fan", "pump"}
+
         def cast_arg(arg):
             if type(arg) is str:
                 if arg == "all":
@@ -242,9 +238,9 @@ class ControlCluster(object):
     def __init__(self, ID):
         self.ID = ID
         self.form_GPIO_map()
-        self.controls = {"light": "off", "valve": "off", "fan": "off", "pump": "off"}
+        self.controls = {"light": "off",
+                         "valve": "off", "fan": "off", "pump": "off"}
         # Create dynamically sized lists to hold IO data
-        ControlCluster.pump_operation = [0] * len(ControlCluster.GPIOdict)
         self._list.append(self)
 
 
