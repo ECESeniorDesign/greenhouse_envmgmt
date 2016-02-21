@@ -54,13 +54,13 @@ class SensorCluster(object):
         self.acidity = 0
         self.timestamp = time()  # record time at instantiation
         self._list.append(self)
-        self.update_count = 0
+        self.update_count = 0;
 
     def update_lux(self, bus, extend=0):
         """ Communicates with the TSL2550D light sensor and returns a 
             lux value. 
 
-        Note that this method contains approximately 1 second of total delay.
+        Note that this method contains approximately 1 second of total delay time.
             This delay is necessary in order to obtain full resolution
             compensated lux values.
 
@@ -99,7 +99,7 @@ class SensorCluster(object):
             adc_ch1 = bus.read_byte(SensorCluster.lux_addr)
             count1 = get_lux_count(adc_ch1) * scale  # 5x for extended mode
             ratio = count1 / (count0 - count1)
-            lux = (count0 - count1) * .39 * e**(-.181 * (ratio**2))
+            lux = (count0 - count1) * .39 * e**(-.181*(ratio**2))
             self.lux = round(lux, 3)
             return TCA_select(bus, self.mux_addr, "off")
         else:
@@ -135,14 +135,14 @@ class SensorCluster(object):
                 scaling up the sensor output.
                 This may need to be adjusted if a different sensor is used
         """
-        SensorCluster.analog_sensor_power(bus, "on")  # turn on sensor
+        SensorCluster.analog_sensor_power(bus,"on") # turn on sensor
         sleep(.2)
         TCA_select(bus, self.mux_addr, SensorCluster.adc_chan)
         moisture = get_ADC_value(
             bus, SensorCluster.adc_addr, SensorCluster.moisture_chan)
         moisture *= 2  # Account for voltage division within moisture sensor
         status = TCA_select(bus, self.mux_addr, "off")  # Turn off mux.
-        SensorCluster.analog_sensor_power(bus, "off")  # turn off sensor
+        SensorCluster.analog_sensor_power(bus,"off") # turn off sensor
         if (moisture > 0.1 and moisture < .985):
             self.soil_moisture = round(moisture, 3)
         else:
@@ -191,24 +191,18 @@ class SensorCluster(object):
             raise SensorError("Could not save sensor values.")
 
     @classmethod
-    def update_all_sensors(cls, bus, opt=None):
+    def update_all_sensors(cls, bus):
         """ Method iterates over all SensorCluster objects and updates 
             each sensor value and saves the values to the plant record.
                 - Note that it must receive an open bus object.
-            Usage: 
-            Update all sensors exluding analog sensors that need power.
-            - update_all_sensors(bus)
-
-            Update all sensors including soil moisture.
-            - update_all_sensors(bus, "all")
-
+            Usage: updateAllSensors(bus)
         """
         for sensorobj in cls:
-            sensorobj.update_instance_sensors(bus, opt)
+            sensorobj.update_instance_sensors(bus)
             sensorobj.save_instance_sensors()
 
     @classmethod
-    def analog_sensor_power(cls, bus, operation):
+    def analog_sensor_power(cls, bus, string):
         """ Method that turns on all of the analog sensor modules
             Includes all attached soil moisture sensors
             Note that all of the SensorCluster object should be attached
@@ -225,12 +219,12 @@ class SensorCluster(object):
         """
         # Set appropriate analog sensor power bit in GPIO mask
         # using the ControlCluster bank_mask to avoid overwriting any data
-        if operation == "on":
-            ControlCluster.bank_mask[cls.power_bank] = ControlCluster.bank_mask[
-                cls.power_bank] | 1 << cls.analog_power_pin
-        elif operation == "off":
-            ControlCluster.bank_mask[cls.power_bank] = ControlCluster.bank_mask[
-                cls.power_bank] & (0b11111111 ^ (1 << cls.analog_power_pin))
+        if string == "on":
+            ControlCluster.bank_mask[cls.power_bank] = ControlCluster.bank_mask[cls.power_bank] | \
+                1 << cls.analog_power_pin
+        elif string == "off":
+            ControlCluster.bank_mask[cls.power_bank] = ControlCluster.bank_mask[cls.power_bank] & \
+                (0b11111111 ^ (1 << cls.analog_power_pin))
         else:
             raise SensorError(
                 "Invalid command used while enabling analog sensors")
@@ -254,7 +248,7 @@ def get_lux_count(lux_byte):
         chord_num = (lux_byte & LUX_CHORD_MASK) >> 4
         step_val = 2**chord_num
         chord_val = int(16.5 * (step_val - 1))
-        count = chord_val + step_val * step_num
+        count = chord_val + step_val*step_num
         return count
     else:
         raise SensorError("Invalid lux sensor data.")
@@ -277,3 +271,4 @@ class I2CBusError(Exception):
             after successive updates. 
     """
     pass
+
