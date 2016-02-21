@@ -3,6 +3,11 @@ from i2c_utility import IO_expander_output, get_ADC_value
 from operator import itemgetter
 from math import pi
 
+class IterList(type):
+    """ Metaclass for iterating over sensor objects in a _list
+    """
+    def __iter__(cls):
+        return iter(cls._list)
 
 class ControlCluster(object):
     """ This class serves as a control module for each plant's
@@ -24,34 +29,28 @@ class ControlCluster(object):
                 plant1Control.update(bus)
 
     """
+    __metaclass__ = IterList
+    _list = []
     GPIOdict = []
     pump_pin = 0  # Pin A0 is assigned to the
     pump_bank = 0
     current_volume = 0
 
     @classmethod
-    def get_water_level(cls, bus):
-        """ This method uses the ADC on the control module to measure
-            the current water tank level and returns the water volume
-            remaining in the tank.
+    def compile_instance_masks(cls):
+        """ Compiles instance masks into a master mask that is usable by
+                the IO expander. Also determines whether or not the pump
+                should be on. 
+            Method is generalized to support multiple IO expanders
+                for possible future expansion.
         """
-        # ----------
-        # These values should be updated based on the real system parameters
-        tank_height = 10
-        vref = 5  # voltage reference
-        rref = 10000  # Reference resistor (or pot)
-        # ----------
-        for i in range(5):
-            # Take five readings and do an average
-            # Fetch value from ADC (0x69 - ch1)
-            val = get_ADC_value(bus, 0x69, 1) + val
-        water_sensor_avg = val / 5
-        water_sensor_resistance = rref / (water_sensor_avg - 1)
-        depth_cm = water_sensor_resistance / 59  # sensor is ~59 ohms/cm
-        cls.water_remaining = depth_cm / tank_height
-        # Return the current depth in case the user is interested in
-        #   that parameter alone. (IE for automatic shut-off)
-        return depth_cm
+        # Compute required # of IO expanders needed, clear mask variable.
+        number_IO_expanders = ((len(cls._list) - 1) / 4) + 1
+        cls.master_mask = [0,0]*number_IO_expanders
+        for ctrlobj in cls:
+            cls.master_mask[ctrlobj.bank] |= ctrlobj.mask
+            if ctrlobj.pump_request == 1:
+                cls.master_mask[cls.pump_bank] |= 1 << cls.pump_pin
 
     def update(self, bus):
         """ This method exposes a more simple interface to the IO module
@@ -60,10 +59,18 @@ class ControlCluster(object):
 
         Usage: plant1Control.update(bus)
         """
+        ControlCluster.compile_instance_masks()
+
         IO_expander_output(
             bus, self.IOexpander,
             self.bank,
-            self.mask)
+            ControlCluster.master_mask[self.bank])
+
+        if self.bank != ControlCluster.pump_bank:
+            IO_expander_output(
+            bus, self.IOexpander,
+            ControlCluster.pump_bank,
+            ControlCluster.master_mask[ControlCluster.pump_bank])
 
     def form_GPIO_map(self):
         """ This method creates a dictionary to map plant IDs to
@@ -225,8 +232,10 @@ class ControlCluster(object):
         mask = reduce(construct_mask, controls, 0x0)
 
         # handle pump separately
-        if self.bank == 0 and self.controls["pump"] == "on":
-            mask |= 1 << ControlCluster.pump_pin
+        if self.controls["pump"] == "on":
+            self.pump_request = 1
+        else:
+            self.pump_request = 0
 
         return mask
 
@@ -236,7 +245,7 @@ class ControlCluster(object):
         self.controls = {"light": "off", "valve": "off", "fan": "off", "pump": "off"}
         # Create dynamically sized lists to hold IO data
         ControlCluster.pump_operation = [0] * len(ControlCluster.GPIOdict)
-        ControlCluster.bank_mask = [0] * len(ControlCluster.GPIOdict)
+        self._list.append(self)
 
 
 class IOExpanderFailure(Exception):
