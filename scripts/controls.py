@@ -216,44 +216,21 @@ class ControlCluster(object):
                 ctrolobj.control(bus, on="light", off="fan")
 
         """
-        if type(on) is str:
-            if on == "all":
-                self.manage_light("on")
-                self.manage_valve("on")
-                self.manage_fan("on")
-                self.manage_pump("on")
-                return self.update(bus)
+        controls = {"light", "valve", "fan", "pump"}
+        def cast_arg(arg):
+            if type(arg) is str:
+                if arg == "all":
+                    return controls
+                else:
+                    return {arg} & controls
             else:
-                # Implicitly cast to a list in order to iterate correctly.
-                on = [on]
-        if type(off) is str:
-            if off == "all":
-                self.manage_light("off")
-                self.manage_valve("off")
-                self.manage_fan("off")
-                self.manage_pump("off")
-                return self.update(bus)
-            else:
-                off = [off]
+                return set(arg) & controls
+
         # User has requested individual controls.
-        for item in on:
-            if item == "light":
-                self.manage_light("on")
-            if item == "fan":
-                self.manage_fan("on")
-            if item == "valve":
-                self.manage_valve("on")
-            if item == "pump":
-                self.manage_pump("on")
-        for item in off:
-            if item == "light":
-                self.manage_light("off")
-            if item == "fan":
-                self.manage_fan("off")
-            if item == "valve":
-                self.manage_valve("off")
-            if item == "pump":
-                self.manage_pump("off")
+        for item in cast_arg(on):
+            getattr(self, "manage_" + item)("on")
+        for item in cast_arg(off):
+            getattr(self, "manage_" + item)("off")
         return self.update(bus)
 
     def __init__(self, ID):
