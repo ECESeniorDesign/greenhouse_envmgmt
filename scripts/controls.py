@@ -19,12 +19,9 @@ class ControlCluster(object):
             This will create the first plant control unit.
 
             Turning on control units individually:
-                plant1Control.manage_fan("on")
-                plant1Control.manage_light("off")
+                plant1Control.manage("fan", "on")
+                plant1Control.manage("light", "off")
                 plant1Control.update(bus)
-
-            Batch Control Management:
-                manage_all(onlist=["light"], offlist=["fan"])
 
     """
     GPIOdict = []
@@ -66,7 +63,7 @@ class ControlCluster(object):
         IO_expander_output(
             bus, self.IOexpander,
             self.bank,
-            ControlCluster.bank_mask[self.bank])
+            self.mask)
 
     def form_GPIO_map(self):
         """ This method creates a dictionary to map plant IDs to
@@ -120,33 +117,13 @@ class ControlCluster(object):
         Usage:
             manage_lights("on")
         """
-
-        if operation == "on":
-            # It is currently okay to turn on the light
-            ControlCluster.bank_mask[
-                self.bank] = (1 << self.light) | (ControlCluster.bank_mask[self.bank])
-        elif operation == "off":
-            ControlCluster.bank_mask[
-                self.bank] = ~(1 << self.light) & (ControlCluster.bank_mask[self.bank])
-        else:
-            raise IOExpanderFailure(
-                "Invalid operation passed to light controller")
-        return True
+        return self.manage("light", operation)
 
     def manage_fan(self, operation):
         """ Usage:
                 manageFans("on") # Turn on the fan for plant 1
         """
-        if operation == "on":
-            ControlCluster.bank_mask[
-                self.bank] = (1 << self.fan) | (ControlCluster.bank_mask[self.bank])
-        elif operation == "off":
-            ControlCluster.bank_mask[
-                self.bank] = ~(1 << self.fan) & (ControlCluster.bank_mask[self.bank])
-        else:
-            raise IOExpanderFailure(
-                "Invalid operation passed to fan controller")
-        return True
+        return self.manage("fan", operation)
 
     def manage_valve(self, operation):
         """Manages turning on the mist pump based on water data from the plant.
@@ -156,16 +133,7 @@ class ControlCluster(object):
         This function will need to select a nozzle to open
         before turning on the mist pump.
         """
-        if operation == "on":
-            ControlCluster.bank_mask[
-                self.bank] = (1 << self.valve) | (ControlCluster.bank_mask[self.bank])
-        elif operation == "off":
-            ControlCluster.bank_mask[
-                self.bank] = ~(1 << self.valve) & (ControlCluster.bank_mask[self.bank])
-        else:
-            raise IOExpanderFailure(
-                "Invalid operation passed to valve controller")
-        return True
+        return self.manage("valve", operation)
 
     def manage_pump(self, operation):
         """
@@ -175,21 +143,30 @@ class ControlCluster(object):
             that all plants have set the pump_operation bit to 1.
 
         """
-
         if operation == "on":
             ControlCluster.pump_operation[self.ID - 1] = 1
         elif operation == "off":
             ControlCluster.pump_operation[self.ID - 1] = 0
         if 1 in ControlCluster.pump_operation:
             # Turn the pump on
-            ControlCluster.bank_mask[
-                ControlCluster.pump_bank] = (1 << ControlCluster.pump_pin) | \
-                (ControlCluster.bank_mask[ControlCluster.pump_bank])
+            self.controls["pump"] = "on"
         else:
             # Turn the pump off
-            ControlCluster.bank_mask[
-                ControlCluster.pump_bank] = ~(1 << ControlCluster.pump_pin) & \
-                (ControlCluster.bank_mask[ControlCluster.pump_bank])
+            self.controls["pump"] = "off"
+        return True
+
+    def manage(self, control, operation):
+        if control not in {"light", "valve", "fan", "pump"}:
+            raise IOExpanderFailure(
+                "Invalid controller")
+        if operation not in ["on", "off"]:
+            raise IOExpanderFailure(
+                "Invalid operation passed to {} controller".format(control))
+        if control == "pump":
+            return self.manage_pump(operation)
+        else:
+            self.controls[control] = operation
+            return True
 
     def control(self, bus, on=[], off=[]):
         """
@@ -228,14 +205,35 @@ class ControlCluster(object):
 
         # User has requested individual controls.
         for item in cast_arg(on):
-            getattr(self, "manage_" + item)("on")
+            self.manage(item, "on")
         for item in cast_arg(off):
-            getattr(self, "manage_" + item)("off")
+            self.manage(item, "off")
         return self.update(bus)
+
+    @property
+    def mask(self):
+
+        def construct_mask(mask, control):
+            if self.controls[control] == "on":
+                return mask | 1 << self.GPIO_dict[0][control]
+            else:
+                return mask
+
+        # probably should hold a constant of these somewhere
+        controls = ["fan", "light", "valve"]
+
+        mask = reduce(construct_mask, controls, 0x0)
+
+        # handle pump separately
+        if self.bank == 0 and self.controls["pump"] == "on":
+            mask |= 1 << ControlCluster.pump_pin
+
+        return mask
 
     def __init__(self, ID):
         self.ID = ID
         self.form_GPIO_map()
+        self.controls = {"light": "off", "valve": "off", "fan": "off", "pump": "off"}
         # Create dynamically sized lists to hold IO data
         ControlCluster.pump_operation = [0] * len(ControlCluster.GPIOdict)
         ControlCluster.bank_mask = [0] * len(ControlCluster.GPIOdict)
