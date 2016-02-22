@@ -15,7 +15,8 @@ def test(runs=None):
     from time import sleep
     
     try:
-        bus = smbus.SMBus(1)
+        ControlCluster.bus = smbus.SMBus(1)
+        SensorCluster.bus = ControlCluster.bus
     except IOError:
         print("Cannot open bus. Ignore if using a virtual environment")
 
@@ -66,10 +67,10 @@ def test(runs=None):
           str(plant1_control.ID) + "," + str(plant2_control.ID))
 
     print("Updating sensor data for plant 1")
-    if plant1_sense.update_instance_sensors(bus, opt="all") == False:
+    if plant1_sense.update_instance_sensors(opt="all") == False:
         print("Plant 1 failed to update.")
     print("Updating sensor data for plant 2")
-    if plant2_sense.update_instance_sensors(bus, opt="all") == False:
+    if plant2_sense.update_instance_sensors(opt="all") == False:
         print("Plant 2 failed to update")
 
     print("Outputting sensor data to console...")
@@ -87,7 +88,7 @@ def test(runs=None):
 
     print("Attempting batch sensor update")
     print("Test includes webservice connectivity test")
-    SensorCluster.update_all_sensors(bus)
+    SensorCluster.update_all_sensors()
 
     print("Outputting sensor data to console...")
     print("....................................")
@@ -110,7 +111,7 @@ def test(runs=None):
             ",Plant 1 Lux,Plant 2 Lux,Plant 1 Moisture,Plant 2 Moisture")
         for cycle in range(runs):
             try:
-                SensorCluster.update_all_sensors(bus)
+                SensorCluster.update_all_sensors()
                 print(str(cycle) + "," + str(plant1_sense.temp) + "," + str(
                     plant2_sense.temp) + "," + str(plant1_sense.humidity) + "," +
                     str(plant2_sense.humidity) + "," + str(plant1_sense.lux) + "," + 

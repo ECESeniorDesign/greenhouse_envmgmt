@@ -28,7 +28,7 @@ class ControlCluster(object):
             Turning on control units individually:
                 plant1Control.manage("fan", "on")
                 plant1Control.manage("light", "off")
-                plant1Control.update(bus)
+                plant1Control.update()
 
     """
     __metaclass__ = IterList
@@ -37,6 +37,7 @@ class ControlCluster(object):
     pump_pin = 0  # Pin A0 is assigned to the
     pump_bank = 0
     current_volume = 0
+    bus = None
 
     @classmethod
     def compile_instance_masks(cls):
@@ -54,7 +55,7 @@ class ControlCluster(object):
             if ctrlobj.pump_request == 1:
                 cls.master_mask[cls.pump_bank] |= 1 << cls.pump_pin
 
-    def update(self, bus):
+    def update(self):
         """ This method exposes a more simple interface to the IO module
         Regardless of what the control instance contains, this method
         will transmit the queued IO commands to the IO expander
@@ -64,13 +65,13 @@ class ControlCluster(object):
         ControlCluster.compile_instance_masks()
 
         IO_expander_output(
-            bus, self.IOexpander,
+            ControlCluster.bus, self.IOexpander,
             self.bank,
             ControlCluster.master_mask[self.bank])
 
         if self.bank != ControlCluster.pump_bank:
             IO_expander_output(
-                bus, self.IOexpander,
+                ControlCluster.bus, self.IOexpander,
                 ControlCluster.pump_bank,
                 ControlCluster.master_mask[ControlCluster.pump_bank])
 
@@ -170,11 +171,10 @@ class ControlCluster(object):
             self.controls[control] = operation
             return True
 
-    def control(self, bus, on=[], off=[]):
+    def control(self, on=[], off=[]):
         """
         This method serves as the primary interaction point
             to the controls interface.
-        - The user must pass an SMBus object. 
         - The 'on' and 'off' arguments can either be a list or a single string.
             This allows for both individual device control and batch controls.
 
@@ -184,15 +184,15 @@ class ControlCluster(object):
 
         Usage:
             - Turning off all devices:
-                ctrlobj.control(bus, off="all")
+                ctrlobj.control(off="all")
             - Turning on all devices:
-                ctrlobj.control(bus, on="all")
+                ctrlobj.control(on="all")
 
             - Turning on the light and fan ONLY (for example)
-                ctrlobj.control(bus, on=["light", "fan"])
+                ctrlobj.control(on=["light", "fan"])
 
             - Turning on the light and turning off the fan (for example)
-                ctrolobj.control(bus, on="light", off="fan")
+                ctrolobj.control(on="light", off="fan")
 
         """
         controls = {"light", "valve", "fan", "pump"}
@@ -211,7 +211,7 @@ class ControlCluster(object):
             self.manage(item, "on")
         for item in cast_arg(off):
             self.manage(item, "off")
-        return self.update(bus)
+        return self.update()
 
     @property
     def mask(self):

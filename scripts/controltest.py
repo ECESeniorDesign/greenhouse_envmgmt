@@ -10,10 +10,9 @@ import sensor_models
 from time import sleep
 # sensor_models.models.lazy_record.connect_db("temp.db")
 try:
-    bus = smbus.SMBus(1)
+    ControlCluster.bus = smbus.SMBus(1)
 except IOError:
     print("Cannot open bus. Ignore if using a virtual environment")
-
 
 plant1_sense = SensorCluster(ID=1, mux_addr=0x70)
 plant2_sense = SensorCluster(ID=2, mux_addr=0x70)
@@ -35,24 +34,24 @@ print("Testing controls API")
 
 list1_on = ["light", "fan"]
 list2_on = ["light"]
-plant1_control.control(bus, on=list1_on)
-plant2_control.control(bus, on=list2_on)
+plant1_control.control(on=list1_on)
+plant2_control.control(on=list2_on)
 print("Module 1 has it's light and fan on.")
 print("Module 2 has it's light on")
 sleep(2)
-plant1_control.control(bus, off="light")
+plant1_control.control(off="light")
 print("Module 1's light has been turned off.")
 sleep(2)
 print("Sending duplicate command to test efficiency.")
-plant1_control.control(bus, off="light")
+plant1_control.control(off="light")
 print("Testing pump operation.")
-plant1_control.control(bus, on="pump")
-plant2_control.control(bus, on="pump")
+plant1_control.control(on="pump")
+plant2_control.control(on="pump")
 sleep(2)
 print("Turning off the pump")
-plant1_control.control(bus, off="pump")
-plant2_control.control(bus, off="pump")
+plant1_control.control(off="pump")
+plant2_control.control(off="pump")
 sleep(2)
 print("Turning off all devices")
-plant1_control.control(bus, off="all")
-plant2_control.control(bus, off="all")
+plant1_control.control(off="all")
+plant2_control.control(off="all")
