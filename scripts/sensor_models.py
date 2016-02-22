@@ -39,6 +39,9 @@ class SensorCluster(object):
     adc_addr = 0x68
     adc_chan = 2
     moisture_chan = 1
+    tank_adc_adr = 0x69
+    tank_adc_chan = 0
+
 
     def __init__(self, ID, mux_addr):
 
@@ -237,6 +240,30 @@ class SensorCluster(object):
         # Send updated IO mask to output
         IO_expander_output(bus, 0x20, cls.power_bank,
                            ControlCluster.bank_mask[cls.power_bank])
+
+@classmethod
+    def get_water_level(cls, bus):
+        """ This method uses the ADC on the control module to measure
+            the current water tank level and returns the water volume
+            remaining in the tank.
+        """
+        # ----------
+        # These values should be updated based on the real system parameters
+        tank_height = 10
+        vref = 5  # voltage reference
+        rref = 10000  # Reference resistor (or pot)
+        # ----------
+        for i in range(5):
+            # Take five readings and do an average
+            # Fetch value from ADC (0x69 - ch1)
+            val = get_ADC_value(bus, 0x69, 1) + val
+        water_sensor_avg = val / 5
+        water_sensor_resistance = rref / (water_sensor_avg - 1)
+        depth_cm = water_sensor_resistance / 59  # sensor is ~59 ohms/cm
+        cls.water_remaining = depth_cm / tank_height
+        # Return the current depth in case the user is interested in
+        #   that parameter alone. (IE for automatic shut-off)
+        return depth_cm
 
 
 def get_lux_count(lux_byte):
