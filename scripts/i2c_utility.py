@@ -94,13 +94,13 @@ def IO_expander_output(bus, addr, bank, mask):
 
     if (bank != 0) and (bank != 1):
         print()
-        raise Expection("An invalid IO bank has been selected")
+        raise InvalidIOUsage("An invalid IO bank has been selected")
 
     IO_direction = IODIR_map[bank]
     output_reg = output_map[bank]
 
-    currentStatus = bus.read_byte_data(addr, output_reg)
-    if currentStatus == mask:
+    current_status = bus.read_byte_data(addr, output_reg)
+    if current_status == mask:
         # This means nothing needs to happen
         print("Current control status matches requested controls. " +
               "No action is required.")
@@ -108,6 +108,22 @@ def IO_expander_output(bus, addr, bank, mask):
 
     bus.write_byte_data(addr, IO_direction, 0)
     bus.write_byte_data(addr, output_reg, mask)
+
+def get_IO_reg(bus, addr, bank):
+    """
+    Method retrieves the register corresponding to respective bank (0 or 1)
+
+    Address defaults to 0x20, as this is the default IO address.
+
+    """
+    output_map = [0x14, 0x15]
+    if (bank != 0) and (bank != 1):
+        print()
+        raise InvalidIOUsage("An invalid IO bank has been selected")
+
+    output_reg = output_map[bank]
+    current_status = bus.read_byte_data(addr, output_reg)
+    return current_status
 
 
 def import_i2c_addr(bus, opt=None):
@@ -140,3 +156,5 @@ def import_i2c_addr(bus, opt=None):
     else:
         return i2c_list
 
+class InvalidIOUsage(Exception):
+    pass

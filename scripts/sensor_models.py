@@ -12,7 +12,7 @@ import smbus
 import app.models as models
 from app.config import DATABASE
 from controls import ControlCluster
-from i2c_utility import TCA_select, get_ADC_value, IO_expander_output
+from i2c_utility import TCA_select, get_ADC_value, IO_expander_output, get_IO_reg
 from time import sleep, time  # needed to force a delay in humidity module
 from math import e
 
@@ -40,8 +40,7 @@ class SensorCluster(object):
     adc_chan = 2
     moisture_chan = 1
     tank_adc_adr = 0x69
-    tank_adc_chan = 0
-
+    tank_adc_chan = 1
 
     def __init__(self, ID, mux_addr):
 
@@ -228,20 +227,20 @@ class SensorCluster(object):
         """
         # Set appropriate analog sensor power bit in GPIO mask
         # using the ControlCluster bank_mask to avoid overwriting any data
+        reg_data = get_IO_reg(bus, 0x20, cls.power_bank)
+
         if operation == "on":
-            ControlCluster.bank_mask[cls.power_bank] = ControlCluster.bank_mask[
-                cls.power_bank] | 1 << cls.analog_power_pin
+            reg_data = reg_data | 1 << cls.analog_power_pin
         elif operation == "off":
-            ControlCluster.bank_mask[cls.power_bank] = ControlCluster.bank_mask[
-                cls.power_bank] & (0b11111111 ^ (1 << cls.analog_power_pin))
+            reg_data = reg_data & (0b11111111 ^ (1 << cls.analog_power_pin))
         else:
             raise SensorError(
                 "Invalid command used while enabling analog sensors")
         # Send updated IO mask to output
-        IO_expander_output(bus, 0x20, cls.power_bank,
-                           ControlCluster.bank_mask[cls.power_bank])
+        IO_expander_output(bus, 0x20, cls.power_bank, reg_data)
 
-@classmethod
+
+    @classmethod
     def get_water_level(cls, bus):
         """ This method uses the ADC on the control module to measure
             the current water tank level and returns the water volume
@@ -256,7 +255,9 @@ class SensorCluster(object):
         for i in range(5):
             # Take five readings and do an average
             # Fetch value from ADC (0x69 - ch1)
-            val = get_ADC_value(bus, 0x69, 1) + val
+            val = get_ADC_value(bus,
+                                cls.tank_adc_adr,
+                                cls.tank_adc_chan) + val
         water_sensor_avg = val / 5
         water_sensor_resistance = rref / (water_sensor_avg - 1)
         depth_cm = water_sensor_resistance / 59  # sensor is ~59 ohms/cm
