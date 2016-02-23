@@ -12,7 +12,7 @@ import smbus
 import app.models as models
 from app.config import DATABASE
 from controls import ControlCluster
-from i2c_utility import TCA_select, get_ADC_value, IO_expander_output
+from i2c_utility import TCA_select, get_ADC_value, IO_expander_output, get_IO_reg
 from time import sleep, time  # needed to force a delay in humidity module
 from math import e
 
@@ -85,27 +85,27 @@ class SensorCluster(object):
         LUX_READ_CH0 = 0x43
         LUX_READ_CH1 = 0x83
         # Select correct I2C mux channel on TCA module
-        TCA_select(SencorCluster.bus, self.mux_addr, SensorCluster.lux_chan)
+        TCA_select(SensorCluster.bus, self.mux_addr, SensorCluster.lux_chan)
         # Make sure lux sensor is powered up.
-        SencorCluster.bus.write_byte(SensorCluster.lux_addr, LUX_PWR_ON)
-        lux_on = SencorCluster.bus.read_byte_data(SensorCluster.lux_addr, LUX_PWR_ON)
+        SensorCluster.bus.write_byte(SensorCluster.lux_addr, LUX_PWR_ON)
+        lux_on = SensorCluster.bus.read_byte_data(SensorCluster.lux_addr, LUX_PWR_ON)
         # Check for successful powerup
         if (lux_on == LUX_PWR_ON):
             # Send command to initiate ADC on each channel
             # Read each channel after the new data is ready
-            SencorCluster.bus.write_byte(SensorCluster.lux_addr, LUX_MODE)
-            SencorCluster.bus.write_byte(SensorCluster.lux_addr, LUX_READ_CH0)
+            SensorCluster.bus.write_byte(SensorCluster.lux_addr, LUX_MODE)
+            SensorCluster.bus.write_byte(SensorCluster.lux_addr, LUX_READ_CH0)
             sleep(delay)
-            adc_ch0 = SencorCluster.bus.read_byte(SensorCluster.lux_addr)
+            adc_ch0 = SensorCluster.bus.read_byte(SensorCluster.lux_addr)
             count0 = get_lux_count(adc_ch0) * scale  # 5x for extended mode
-            SencorCluster.bus.write_byte(SensorCluster.lux_addr, LUX_READ_CH1)
+            SensorCluster.bus.write_byte(SensorCluster.lux_addr, LUX_READ_CH1)
             sleep(delay)
-            adc_ch1 = SencorCluster.bus.read_byte(SensorCluster.lux_addr)
+            adc_ch1 = SensorCluster.bus.read_byte(SensorCluster.lux_addr)
             count1 = get_lux_count(adc_ch1) * scale  # 5x for extended mode
             ratio = count1 / (count0 - count1)
             lux = (count0 - count1) * .39 * e**(-.181 * (ratio**2))
             self.lux = round(lux, 3)
-            return TCA_select(SencorCluster.bus, self.mux_addr, "off")
+            return TCA_select(SensorCluster.bus, self.mux_addr, "off")
         else:
             raise SensorError("The lux sensor is powered down.")
 
@@ -115,11 +115,11 @@ class SensorCluster(object):
         """
         # Create mask for STATUS (first two bits of 64 bit wide result)
         STATUS = 0b11 << 6
-        TCA_select(SencorCluster.bus, self.mux_addr, SensorCluster.humidity_chan)
-        SencorCluster.bus.write_quick(SensorCluster.humidity_addr)  # Begin conversion
+        TCA_select(SensorCluster.bus, self.mux_addr, SensorCluster.humidity_chan)
+        SensorCluster.bus.write_quick(SensorCluster.humidity_addr)  # Begin conversion
         sleep(.25)
         # wait 100ms to make sure the conversion takes place.
-        data = SencorCluster.bus.read_i2c_block_data(SensorCluster.humidity_addr, 0, 4)
+        data = SensorCluster.bus.read_i2c_block_data(SensorCluster.humidity_addr, 0, 4)
         status = (data[0] & STATUS) >> 6
         if status == 0 or status == 1:  # will always pass for now.
             humidity = round((((data[0] & 0x3f) << 8) |
@@ -127,7 +127,7 @@ class SensorCluster(object):
             self.humidity = humidity
             self.temp = round((((data[2] << 6) + ((data[3] & 0xfc) >> 2))
                                * 165.0 / 16382.0 - 40.0), 3)
-            return TCA_select(SencorCluster.bus, self.mux_addr, "off")
+            return TCA_select(SensorCluster.bus, self.mux_addr, "off")
         else:
             raise I2CBusError("Unable to retrieve humidity")
 
@@ -139,14 +139,14 @@ class SensorCluster(object):
                 scaling up the sensor output.
                 This may need to be adjusted if a different sensor is used
         """
-        SensorCluster.analog_sensor_power(SencorCluster.bus, "on")  # turn on sensor
+        SensorCluster.analog_sensor_power(SensorCluster.bus, "on")  # turn on sensor
         sleep(.2)
-        TCA_select(SencorCluster.bus, self.mux_addr, SensorCluster.adc_chan)
+        TCA_select(SensorCluster.bus, self.mux_addr, SensorCluster.adc_chan)
         moisture = get_ADC_value(
-            SencorCluster.bus, SensorCluster.adc_addr, SensorCluster.moisture_chan)
+            SensorCluster.bus, SensorCluster.adc_addr, SensorCluster.moisture_chan)
         moisture *= 2  # Account for voltage division within moisture sensor
-        status = TCA_select(SencorCluster.bus, self.mux_addr, "off")  # Turn off mux.
-        SensorCluster.analog_sensor_power(SencorCluster.bus, "off")  # turn off sensor
+        status = TCA_select(SensorCluster.bus, self.mux_addr, "off")  # Turn off mux.
+        SensorCluster.analog_sensor_power(SensorCluster.bus, "off")  # turn off sensor
         if (moisture > 0.1 and moisture < .985):
             self.soil_moisture = round(moisture, 3)
         else:
@@ -174,7 +174,7 @@ class SensorCluster(object):
                 pass
         self.timestamp = time()
         # disable sensor module
-        tca_status = TCA_select(SencorCluster.bus, self.mux_addr, "off")
+        tca_status = TCA_select(SensorCluster.bus, self.mux_addr, "off")
         if tca_status != 0:
             raise I2CBusError(
                 "Bus multiplexer was unable to switch off to prevent conflicts")
@@ -212,7 +212,7 @@ class SensorCluster(object):
             sensorobj.save_instance_sensors()
 
     @classmethod
-    def analog_sensor_power(cls, operation):
+    def analog_sensor_power(cls, bus, operation):
         """ Method that turns on all of the analog sensor modules
             Includes all attached soil moisture sensors
             Note that all of the SensorCluster object should be attached
@@ -220,29 +220,25 @@ class SensorCluster(object):
                 to toggle analog sensor power.
             The sensor power should be left on for at least 100ms
                 in order to allow the sensors to stabilize before reading. 
-
-
-                Usage:  SensorCluster.analog_sensor_power("high")
-                OR      SensorCluster.analog_sensor_power("low")
-
+                Usage:  SensorCluster.analog_sensor_power(bus,"high")
+                OR      SensorCluster.analog_sensor_power(bus,"low")
             This method should be removed if an off-board GPIO extender is used.
         """
         # Set appropriate analog sensor power bit in GPIO mask
         # using the ControlCluster bank_mask to avoid overwriting any data
+        reg_data = get_IO_reg(bus, 0x20, cls.power_bank)
+
         if operation == "on":
-            ControlCluster.bank_mask[cls.power_bank] = ControlCluster.bank_mask[
-                cls.power_bank] | 1 << cls.analog_power_pin
+            reg_data = reg_data | 1 << cls.analog_power_pin
         elif operation == "off":
-            ControlCluster.bank_mask[cls.power_bank] = ControlCluster.bank_mask[
-                cls.power_bank] & (0b11111111 ^ (1 << cls.analog_power_pin))
+            reg_data = reg_data & (0b11111111 ^ (1 << cls.analog_power_pin))
         else:
             raise SensorError(
                 "Invalid command used while enabling analog sensors")
         # Send updated IO mask to output
-        IO_expander_output(SencorCluster.bus, 0x20, cls.power_bank,
-                           ControlCluster.bank_mask[cls.power_bank])
+        IO_expander_output(bus, 0x20, cls.power_bank, reg_data)
 
-@classmethod
+    @classmethod
     def get_water_level(cls):
         """ This method uses the ADC on the control module to measure
             the current water tank level and returns the water volume
@@ -257,7 +253,7 @@ class SensorCluster(object):
         for i in range(5):
             # Take five readings and do an average
             # Fetch value from ADC (0x69 - ch1)
-            val = get_ADC_value(SencorCluster.bus, 0x69, 1) + val
+            val = get_ADC_value(SensorCluster.bus, 0x69, 1) + val
         water_sensor_avg = val / 5
         water_sensor_resistance = rref / (water_sensor_avg - 1)
         depth_cm = water_sensor_resistance / 59  # sensor is ~59 ohms/cm

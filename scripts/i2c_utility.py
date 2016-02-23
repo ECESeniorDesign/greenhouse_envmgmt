@@ -109,6 +109,19 @@ def IO_expander_output(bus, addr, bank, mask):
     bus.write_byte_data(addr, IO_direction, 0)
     bus.write_byte_data(addr, output_reg, mask)
 
+def get_IO_reg(bus, addr, bank):
+    """
+    Method retrieves the register corresponding to respective bank (0 or 1)
+    Address defaults to 0x20, as this is the default IO address.
+    """
+    output_map = [0x14, 0x15]
+    if (bank != 0) and (bank != 1):
+        print()
+        raise InvalidIOUsage("An invalid IO bank has been selected")
+
+    output_reg = output_map[bank]
+    current_status = bus.read_byte_data(addr, output_reg)
+    return current_status
 
 def import_i2c_addr(bus, opt=None):
     """ import_i2c_addresses will return a list of the
