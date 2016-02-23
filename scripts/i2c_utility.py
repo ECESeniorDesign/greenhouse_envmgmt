@@ -94,22 +94,14 @@ def IO_expander_output(bus, addr, bank, mask):
 
     if (bank != 0) and (bank != 1):
         print()
-<<<<<<< HEAD
-        raise Expection("An invalid IO bank has been selected")
-=======
         raise InvalidIOUsage("An invalid IO bank has been selected")
->>>>>>> 8042c2a88e8d3177deaf5ac7f1d657528e843478
+
 
     IO_direction = IODIR_map[bank]
     output_reg = output_map[bank]
 
-<<<<<<< HEAD
-    currentStatus = bus.read_byte_data(addr, output_reg)
-    if currentStatus == mask:
-=======
     current_status = bus.read_byte_data(addr, output_reg)
     if current_status == mask:
->>>>>>> 8042c2a88e8d3177deaf5ac7f1d657528e843478
         # This means nothing needs to happen
         print("Current control status matches requested controls. " +
               "No action is required.")
@@ -121,13 +113,6 @@ def IO_expander_output(bus, addr, bank, mask):
 def get_IO_reg(bus, addr, bank):
     """
     Method retrieves the register corresponding to respective bank (0 or 1)
-<<<<<<< HEAD
-    Address defaults to 0x20, as this is the default IO address.
-=======
-
-    Address defaults to 0x20, as this is the default IO address.
-
->>>>>>> 8042c2a88e8d3177deaf5ac7f1d657528e843478
     """
     output_map = [0x14, 0x15]
     if (bank != 0) and (bank != 1):
@@ -138,10 +123,6 @@ def get_IO_reg(bus, addr, bank):
     current_status = bus.read_byte_data(addr, output_reg)
     return current_status
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 8042c2a88e8d3177deaf5ac7f1d657528e843478
 def import_i2c_addr(bus, opt=None):
     """ import_i2c_addresses will return a list of the
             currently connected I2C devices.
@@ -172,8 +153,6 @@ def import_i2c_addr(bus, opt=None):
     else:
         return i2c_list
 
-<<<<<<< HEAD
-=======
+
 class InvalidIOUsage(Exception):
     pass
->>>>>>> 8042c2a88e8d3177deaf5ac7f1d657528e843478
