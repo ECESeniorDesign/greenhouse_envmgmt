@@ -147,7 +147,6 @@ class SensorCluster(object):
         TCA_select(SensorCluster.bus, self.mux_addr, SensorCluster.adc_chan)
         moisture = get_ADC_value(
             SensorCluster.bus, SensorCluster.adc_addr, SensorCluster.moisture_chan)
-        moisture *= 2  # Account for voltage division within moisture sensor
         status = TCA_select(SensorCluster.bus, self.mux_addr, "off")  # Turn off mux.
         SensorCluster.analog_sensor_power(SensorCluster.bus, "off")  # turn off sensor
         if (moisture > 0.1 and moisture < .985):

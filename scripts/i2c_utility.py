@@ -71,7 +71,7 @@ def get_ADC_value(bus, addr, channel):
     if (sign == 1):
         val = (val ^ 0x3ff) + 1  # compute 2s complement for 12 bit val
     # Convert val to a ratiomerical ADC reading
-    return float(val) / float(4095)
+    return float(val) / float(2047)
 
 
 def IO_expander_output(bus, addr, bank, mask):
