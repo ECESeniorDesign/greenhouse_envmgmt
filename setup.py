@@ -6,6 +6,7 @@ setup(
 	description = 'Sensor and Controls Management for Automated Greenhouse based on I2C',
 	author = 'Jeff Baatz',
 	url = 'https://github.com/ECESeniorDesign/greenhouse-sensors',
+	download_url = 'https://github.com/ECESeniorDesign/greenhouse_envmgmt/tarball/1.0'
 	keywords = ['i2c', 'sensors', 'controls'],
 	classifies = [],
 	install_requires=['python-smbus']
