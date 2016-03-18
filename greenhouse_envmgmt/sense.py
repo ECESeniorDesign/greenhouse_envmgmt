@@ -43,13 +43,13 @@ class SensorCluster(object):
     tank_adc_chan = 0
     bus = None
 
-    def __init__(self, ID, mux_addr):
+    def __init__(self, ID, mux_addr=None):
 
         # Initializes cluster, enumeration, and sets up address info
         if (ID < 1):
             raise Exception("Plant IDs must start at 1")
         self.ID = ID  # Plant number specified by caller
-        self.mux_addr = mux_addr
+        self.mux_addr = mux_addr or (0x70 + ID)
         self.temp = 0
         self.humidity = 0
         self.lux = 0
@@ -183,20 +183,17 @@ class SensorCluster(object):
             raise I2CBusError(
                 "Bus multiplexer was unable to switch off to prevent conflicts")
 
-    def save_instance_sensors(self):
-        # Saves all of the current sensor values
-        # to the webservice Plant object
-        plant = models.Plant.for_slot(self.ID, raise_if_not_found=False)
-        if plant:
-            plant.record_sensor(sensor_name="light", sensor_value=self.lux)
-            plant.record_sensor(sensor_name="water",
-                                sensor_value=self.soil_moisture)
-            plant.record_sensor(sensor_name="humidity",
-                                sensor_value=self.humidity)
-            plant.record_sensor(sensor_name="temperature",
-                                sensor_value=self.temp)
-        else:
-            raise SensorError("Could not save sensor values.")
+    def sensor_values(self):
+        """
+        Returns the values of all sensors for this cluster
+        """
+        self.update_instance_sensors(opt="all")
+        return {
+            "light": self.lux,
+            "water": self.soil_moisture,
+            "humidity": self.humidity,
+            "temperature": self.temp
+        }
 
     @classmethod
     def update_all_sensors(cls, opt=None):
@@ -213,7 +210,6 @@ class SensorCluster(object):
         """
         for sensorobj in cls:
             sensorobj.update_instance_sensors(opt)
-            sensorobj.save_instance_sensors()
 
     @classmethod
     def analog_sensor_power(cls, bus, operation):
@@ -224,7 +220,6 @@ class SensorCluster(object):
                 to toggle analog sensor power.
             The sensor power should be left on for at least 100ms
                 in order to allow the sensors to stabilize before reading. 
-<<<<<<< HEAD
                 Usage:  SensorCluster.analog_sensor_power(bus,"high")
                 OR      SensorCluster.analog_sensor_power(bus,"low")
             This method should be removed if an off-board GPIO extender is used.
