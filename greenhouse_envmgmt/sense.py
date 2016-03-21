@@ -10,8 +10,7 @@
 #   in order to use these classes.
 import smbus
 import app.models as models
-from app.config import DATABASE
-from controls import ControlCluster
+from control import ControlCluster
 from i2c_utility import TCA_select, get_ADC_value, IO_expander_output, get_IO_reg
 from time import sleep, time  # needed to force a delay in humidity module
 from math import e
