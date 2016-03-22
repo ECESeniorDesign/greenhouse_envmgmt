@@ -1,17 +1,23 @@
 #!/usr/bin/python
 
-def test(runs=None):
+def test(runs=None, same=False):
+    """ Method for testing the sensor module.
+    Options:
+        runs: Allows user to add multiple test points
+        same: Forces all greenhouse address to point to the same
+                module, allowing only one sensor to be used
+    """
 
     import sys
     sys.path.append("/home/pi/git/greenhouse-webservice/")
+    sys.path.append("/home/pi/git/greenhouse_envmgmt/greenhouse_envmgmt")
     import smbus
     import i2c_utility
     import app.models as models
     from app.config import DATABASE
-    from sensor_models import SensorCluster, IterList
-    from controls import ControlCluster
+    from sense import SensorCluster, IterList
+    from control import ControlCluster
     from datetime import datetime as dt
-    import sensor_models
     from time import sleep
     
     try:
@@ -57,7 +63,10 @@ def test(runs=None):
                                      plant_database_id=1)
 
     plant1_sense = SensorCluster(ID=1, mux_addr=0x70)
-    plant2_sense = SensorCluster(ID=2, mux_addr=0x71)
+    if same == True: # duplicate sensor address if requested 
+        plant2_sense = SensorCluster(ID=2, mux_addr=0x70)
+    else:
+        plant2_sense = SensorCluster(ID=2, mux_addr=0x71)
     print("Plant sensor clusters have successfully been created with IDs: " +
           str(plant1_sense.ID) + "," + str(plant2_sense.ID))
 
