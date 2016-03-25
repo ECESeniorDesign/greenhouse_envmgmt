@@ -34,7 +34,7 @@ class ControlCluster(object):
     __metaclass__ = IterList
     _list = []
     GPIOdict = []
-    pump_pin = 0  # Pin A0 is assigned to the
+    pump_pin = 1  # Pin A1 is assigned to the pump
     pump_bank = 0
     current_volume = 0
     bus = None
