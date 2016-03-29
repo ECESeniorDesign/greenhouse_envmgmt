@@ -47,9 +47,12 @@ def get_ADC_value(bus, addr, channel):
         One shot conversions are used, meaning a wait period is needed
         in order to acquire new data. This is done via a constant poll
         of the ready bit.
-    Upon completion, a ratiomeric value is returned to the caller.
+    Upon completion, a voltage value is returned to the caller.
 
     Usage - ADC_start(bus, SensorCluster.ADC_addr, channel_to_read)
+
+    IMPORTANT NOTE:
+        The ADC uses a 2.048V voltage reference
 
     """
     if channel == 1:
@@ -71,7 +74,7 @@ def get_ADC_value(bus, addr, channel):
     if (sign == 1):
         val = (val ^ 0x3ff) + 1  # compute 2s complement for 12 bit val
     # Convert val to a ratiomerical ADC reading
-    return float(val) / float(2047)
+    return float(val) * 2.048 / float(2047)
 
 
 def IO_expander_output(bus, addr, bank, mask):

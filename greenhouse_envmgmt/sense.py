@@ -249,18 +249,20 @@ class SensorCluster(object):
         """
         # ----------
         # These values should be updated based on the real system parameters
+        vref = 4.95
         tank_height = 10
-        vref = 5  # voltage reference
-        rref = 560  # Reference resistor (or pot)
+        rref = 1979  # Reference resistor (or pot)
         # ----------
+        val = 0
         for i in range(5):
             # Take five readings and do an average
             # Fetch value from ADC (0x69 - ch1)
             val = get_ADC_value(cls.bus, 0x6c, 1) + val
-        water_sensor_avg = val / 5
-        water_sensor_resistance = rref / (water_sensor_avg - 1)
-        exposed_cm = water_sensor_resistance / 56  # sensor is ~56 ohms/cm
-        depth_cm = 21.3 - exposed_cm # calculate submerged length
+        avg = val / 5
+        water_sensor_resistance = rref*avg/(vref - avg)
+        # In lab tests show the resistance is ~55 ohms/cm at room temp
+        exposed_cm = water_sensor_resistance / 55  # sensor is ~56 ohms/cm
+        depth_cm = exposed_cm - 21.3 # calculate ubmerged length
         cls.water_remaining = depth_cm / tank_height
         # Return the current depth in case the user is interested in
         #   that parameter alone. (IE for automatic shut-off)
