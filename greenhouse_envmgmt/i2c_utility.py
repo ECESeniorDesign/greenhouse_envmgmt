@@ -126,13 +126,16 @@ def get_IO_reg(bus, addr, bank):
     current_status = bus.read_byte_data(addr, output_reg)
     return current_status
 
-def import_i2c_addr(bus, opt=None):
+def import_i2c_addr(bus, opt="sensors"):
     """ import_i2c_addresses will return a list of the
             currently connected I2C devices.
 
         This can be used a means to automatically detect
             the number of connected sensor modules.
         Modules are between int(112) and int(119)
+
+        By default, the method will return a list
+            of sensor addresses.
     """
 
     i2c_list = []

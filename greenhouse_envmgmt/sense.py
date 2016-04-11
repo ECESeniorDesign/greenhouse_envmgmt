@@ -27,7 +27,7 @@ class SensorCluster(object):
     'Base class for each individual plant containing sensor info'
     __metaclass__ = IterList
     _list = []
-    analog_power_pin = 1
+    analog_power_pin = 0
     power_bank = 0  # bank and pin used to toggle analog sensor power
     temp_addr = 0x48
     temp_chan = 3
