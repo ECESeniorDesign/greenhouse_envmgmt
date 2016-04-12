@@ -11,7 +11,8 @@
 import smbus
 import app.models as models
 from control import ControlCluster
-from i2c_utility import TCA_select, get_ADC_value, IO_expander_output, get_IO_reg
+from i2c_utility import TCA_select, get_ADC_value, import_i2c_addr
+from i2c_utility import IO_expander_output, get_IO_reg
 from time import sleep, time  # needed to force a delay in humidity module
 from math import e
 
@@ -45,10 +46,11 @@ class SensorCluster(object):
     def __init__(self, ID, mux_addr=None):
 
         # Initializes cluster, enumeration, and sets up address info
-        if (ID < 1):
-            raise Exception("Plant IDs must start at 1")
+        sensor_addr = import_i2c_addr(SensorCluster.bus)
+        if (ID < 1 or ID >= len(sensor_addr)):
+            raise I2CBusError("Plant ID out of range.")
+        self.mux_addr = mux_addr or (sensor_addr[ID-1])
         self.ID = ID  # Plant number specified by caller
-        self.mux_addr = mux_addr or (0x70 + ID)
         self.temp = 0
         self.humidity = 0
         self.lux = 0
@@ -57,6 +59,9 @@ class SensorCluster(object):
         self.timestamp = time()  # record time at instantiation
         self._list.append(self)
         self.update_count = 0
+        
+
+
 
     def update_lux(self, extend=0):
         """ Communicates with the TSL2550D light sensor and returns a 
@@ -149,7 +154,8 @@ class SensorCluster(object):
         status = TCA_select(SensorCluster.bus, self.mux_addr, "off")  # Turn off mux.
         SensorCluster.analog_sensor_power(SensorCluster.bus, "off")  # turn off sensor
         if (moisture < .45): # soaked in water is .43, so .45 indicates an issue.
-            self.soil_moisture = round(moisture, 3)
+            soil_moisture = moisture/.45 # Scale to a percentage value
+            self.soil_moisture = round(soil_moisture,3)
         else:
             raise SensorError(
                 "The soil moisture meter is not configured correctly.")
@@ -253,17 +259,20 @@ class SensorCluster(object):
         # ----------
         # These values should be updated based on the real system parameters
         vref = 4.95
-        tank_height = 19 # in centimeters (height of container)
+        tank_height = 17.5 # in centimeters (height of container)
         rref = 2668  # Reference resistor
         # ----------
         val = 0
         for i in range(5):
             # Take five readings and do an average
             # Fetch value from ADC (0x69 - ch1)
-            val = get_ADC_value(ControlCluster.bus, 0x6c, 1) + val
+            val = get_ADC_value(cls.bus, 0x6c, 1) + val
         avg = val / 5
-        water_sensor_resistance = rref*avg/(vref - avg)
-        depth_cm = water_sensor_resistance*(-.0162) + 30.127 # determined in lab
+        water_sensor_res = rref * avg/(vref - avg)
+        depth_cm = water_sensor_res * 
+                    (-.0163) + 28.127 # measured trasnfer adjusted offset
+        if depth_cm < 1.0: # Below 1cm, the values should not be trusted.
+            depth_cm = 0
         cls.water_remaining = depth_cm / tank_height
         # Return the current depth in case the user is interested in
         #   that parameter alone. (IE for automatic shut-off)
