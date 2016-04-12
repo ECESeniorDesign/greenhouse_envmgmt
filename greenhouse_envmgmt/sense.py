@@ -127,8 +127,8 @@ class SensorCluster(object):
             humidity = round((((data[0] & 0x3f) << 8) |
                               data[1]) * 100.0 / (2**14 - 2), 3)
             self.humidity = humidity
-            self.temp = round((((data[2] << 6) + ((data[3] & 0xfc) >> 2))
-                               * 165.0 / 16382.0 - 40.0), 3)
+            self.temp = (round((((data[2] << 6) + ((data[3] & 0xfc) >> 2))
+                               * 165.0 / 16382.0 - 40.0), 3) * 9/5) + 32
             return TCA_select(SensorCluster.bus, self.mux_addr, "off")
         else:
             raise I2CBusError("Unable to retrieve humidity")
@@ -148,11 +148,11 @@ class SensorCluster(object):
             SensorCluster.bus, SensorCluster.adc_addr, SensorCluster.moisture_chan)
         status = TCA_select(SensorCluster.bus, self.mux_addr, "off")  # Turn off mux.
         SensorCluster.analog_sensor_power(SensorCluster.bus, "off")  # turn off sensor
-        if (moisture > 0.1 and moisture < .985):
+        if (moisture < .45): # soaked in water is .43, so .45 indicates an issue.
             self.soil_moisture = round(moisture, 3)
         else:
             raise SensorError(
-                "The soil moisture meter is either unplugged or powered off.")
+                "The soil moisture meter is not configured correctly.")
         return status
 
     def update_instance_sensors(self, opt=None):
@@ -246,27 +246,28 @@ class SensorCluster(object):
             For this method, it is assumed that a simple voltage divider
             is used to interface the sensor to the ADC module.
             
+            Testing shows that the sensor response is not completely linear,
+                though it is quite close. To make the results more accurate,
+                a mapping method approximated by a linear fit to data is used.
         """
         # ----------
         # These values should be updated based on the real system parameters
         vref = 4.95
-        tank_height = 10
-        rref = 1979  # Reference resistor (or pot)
+        tank_height = 19 # in centimeters (height of container)
+        rref = 2668  # Reference resistor
         # ----------
         val = 0
         for i in range(5):
             # Take five readings and do an average
             # Fetch value from ADC (0x69 - ch1)
-            val = get_ADC_value(cls.bus, 0x6c, 1) + val
+            val = get_ADC_value(ControlCluster.bus, 0x6c, 1) + val
         avg = val / 5
         water_sensor_resistance = rref*avg/(vref - avg)
-        # In lab tests show the resistance is ~55 ohms/cm at room temp
-        exposed_cm = water_sensor_resistance / 55  # sensor is ~56 ohms/cm
-        depth_cm = exposed_cm - 21.3 # calculate ubmerged length
+        depth_cm = water_sensor_resistance*(-.0162) + 30.127 # determined in lab
         cls.water_remaining = depth_cm / tank_height
         # Return the current depth in case the user is interested in
         #   that parameter alone. (IE for automatic shut-off)
-        return depth_cm
+        return depth_cm/tank_height
 
 
 def get_lux_count(lux_byte):
