@@ -26,41 +26,6 @@ def test(runs=None, same=False):
     except IOError:
         print("Cannot open bus. Ignore if using a virtual environment")
 
-    models.lazy_record.connect_db(DATABASE)
-    plant1 = models.Plant.for_slot(1, False)
-    plant2 = models.Plant.for_slot(2, False)
-    if plant1 is None:
-        plant1 = models.Plant.create(name="testPlant1",
-                                     photo_url="testPlant.png",
-                                     water_ideal=57.0,
-                                     water_tolerance=30.0,
-                                     light_ideal=50.0,
-                                     light_tolerance=10.0,
-                                     acidity_ideal=9.0,
-                                     acidity_tolerance=1.0,
-                                     temperature_ideal=55.5,
-                                     temperature_tolerance=11.3,
-                                     humidity_ideal=0.2,
-                                     humidity_tolerance=0.1,
-                                     mature_on=dt(2016, 1, 10),
-                                     slot_id=1,
-                                     plant_database_id=1)
-    if plant2 is None:
-        plant2 = models.Plant.create(name="testPlant2",
-                                     photo_url="testPlant.png",
-                                     water_ideal=57.0,
-                                     water_tolerance=30.0,
-                                     light_ideal=50.0,
-                                     light_tolerance=10.0,
-                                     acidity_ideal=9.0,
-                                     acidity_tolerance=1.0,
-                                     temperature_ideal=55.5,
-                                     temperature_tolerance=11.3,
-                                     humidity_ideal=0.2,
-                                     humidity_tolerance=0.1,
-                                     mature_on=dt(2016, 1, 10),
-                                     slot_id=2,
-                                     plant_database_id=1)
 
     plant1_sense = SensorCluster(ID=1, mux_addr=0x70)
     if same == True: # duplicate sensor address if requested 
