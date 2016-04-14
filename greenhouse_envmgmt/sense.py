@@ -47,7 +47,7 @@ class SensorCluster(object):
 
         # Initializes cluster, enumeration, and sets up address info
         sensor_addr = import_i2c_addr(SensorCluster.bus)
-        if (ID < 1 or ID >= len(sensor_addr)):
+        if (ID < 1 or ID > len(sensor_addr)):
             raise I2CBusError("Plant ID out of range.")
         self.mux_addr = mux_addr or (sensor_addr[ID-1])
         self.ID = ID  # Plant number specified by caller
@@ -154,7 +154,7 @@ class SensorCluster(object):
         status = TCA_select(SensorCluster.bus, self.mux_addr, "off")  # Turn off mux.
         SensorCluster.analog_sensor_power(SensorCluster.bus, "off")  # turn off sensor
         if (moisture < .45): # soaked in water is .43, so .45 indicates an issue.
-            soil_moisture = moisture/.45 # Scale to a percentage value
+            soil_moisture = moisture/.45 # Scale to a percentage value 
             self.soil_moisture = round(soil_moisture,3)
         else:
             raise SensorError(

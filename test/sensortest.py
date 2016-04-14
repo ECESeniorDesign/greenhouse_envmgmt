@@ -13,8 +13,6 @@ def test(runs=None, same=False):
     sys.path.append("/home/pi/git/greenhouse_envmgmt/greenhouse_envmgmt")
     import smbus
     import i2c_utility
-    import app.models as models
-    from app.config import DATABASE
     from sense import SensorCluster, IterList
     from control import ControlCluster
     from datetime import datetime as dt
