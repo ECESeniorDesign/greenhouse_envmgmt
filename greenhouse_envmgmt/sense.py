@@ -47,6 +47,7 @@ class SensorCluster(object):
 
         # Initializes cluster, enumeration, and sets up address info
         sensor_addr = import_i2c_addr(SensorCluster.bus)
+        print("len is " + str(len(sensor_addr)))
         if (ID < 1 or ID > len(sensor_addr)):
             raise I2CBusError("Plant ID out of range.")
         self.mux_addr = mux_addr or (sensor_addr[ID-1])
@@ -269,8 +270,8 @@ class SensorCluster(object):
             val = get_ADC_value(cls.bus, 0x6c, 1) + val
         avg = val / 5
         water_sensor_res = rref * avg/(vref - avg)
-        depth_cm = water_sensor_res * 
-                    (-.0163) + 28.127 # measured trasnfer adjusted offset
+        depth_cm = water_sensor_res * \
+                    (-.0163) + 28.127 # measured transfer adjusted offset
         if depth_cm < 1.0: # Below 1cm, the values should not be trusted.
             depth_cm = 0
         cls.water_remaining = depth_cm / tank_height

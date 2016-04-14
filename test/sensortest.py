@@ -25,11 +25,11 @@ def test(runs=None, same=False):
         print("Cannot open bus. Ignore if using a virtual environment")
 
 
-    plant1_sense = SensorCluster(ID=1, mux_addr=0x70)
+    plant1_sense = SensorCluster(ID=1)
     if same == True: # duplicate sensor address if requested 
-        plant2_sense = SensorCluster(ID=2, mux_addr=0x70)
+        plant2_sense = SensorCluster(ID=1)
     else:
-        plant2_sense = SensorCluster(ID=2, mux_addr=0x71)
+        plant2_sense = SensorCluster(ID=2)
     print("Plant sensor clusters have successfully been created with IDs: " +
           str(plant1_sense.ID) + "," + str(plant2_sense.ID))
 
@@ -48,31 +48,11 @@ def test(runs=None, same=False):
     print("Outputting sensor data to console...")
     print("....................................")
 
-    print("plant1 temperature is " + str(plant1_sense.temp))
-    print("plant2 temperature is " + str(plant2_sense.temp))
-    print("plant1 lux is " + str(plant1_sense.lux))
-    print("plant2 lux is " + str(plant2_sense.lux))
-    print("plant1 humidity is " + str(plant1_sense.humidity))
-    print("plant2 humidity is " + str(plant2_sense.humidity))
-    print("plant1 Soil Moisture is " + str(plant1_sense.soil_moisture))
-    print("plant2 Soil Moisture is " + str(plant2_sense.soil_moisture))
-    sleep(1)
+    print("Plant 1 sensor values")
+    print(plant1_sense.sensor_values())
+    print("Plant 2 sensor values")
+    print(plant2_sense.sensor_values())
 
-    print("Attempting batch sensor update")
-    print("Test includes webservice connectivity test")
-    SensorCluster.update_all_sensors()
-
-    print("Outputting sensor data to console...")
-    print("....................................")
-
-    print("plant1 temperature is " + str(plant1_sense.temp))
-    print("plant2 temperature is " + str(plant2_sense.temp))
-    print("plant1 lux is " + str(plant1_sense.lux))
-    print("plant2 lux is " + str(plant2_sense.lux))
-    print("plant1 humidity is " + str(plant1_sense.humidity))
-    print("plant2 humidity is " + str(plant2_sense.humidity))
-    print("plant1 Soil Moisture is " + str(plant1_sense.soil_moisture))
-    print("plant2 Soil Moisture is " + str(plant2_sense.soil_moisture))
 
     if runs is not None:
         import sys
