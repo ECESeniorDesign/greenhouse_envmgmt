@@ -153,8 +153,8 @@ class SensorCluster(object):
             SensorCluster.bus, SensorCluster.adc_addr, SensorCluster.moisture_chan)
         status = TCA_select(SensorCluster.bus, self.mux_addr, "off")  # Turn off mux.
         SensorCluster.analog_sensor_power(SensorCluster.bus, "off")  # turn off sensor
-        if (moisture < .45): # soaked in water is .43, so .45 indicates an issue.
-            soil_moisture = moisture/.45 # Scale to a percentage value 
+        if (moisture >= 0):
+            soil_moisture = moisture/2.048 # Scale to a percentage value 
             self.soil_moisture = round(soil_moisture,3)
         else:
             raise SensorError(
@@ -269,8 +269,8 @@ class SensorCluster(object):
             val = get_ADC_value(cls.bus, 0x6c, 1) + val
         avg = val / 5
         water_sensor_res = rref * avg/(vref - avg)
-        depth_cm = water_sensor_res * 
-                    (-.0163) + 28.127 # measured trasnfer adjusted offset
+        depth_cm = water_sensor_res * \
+                    (-.0163) + 28.127 # measured transfer adjusted offset
         if depth_cm < 1.0: # Below 1cm, the values should not be trusted.
             depth_cm = 0
         cls.water_remaining = depth_cm / tank_height
