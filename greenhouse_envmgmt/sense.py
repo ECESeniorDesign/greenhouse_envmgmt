@@ -61,8 +61,6 @@ class SensorCluster(object):
         self.update_count = 0
         
 
-
-
     def update_lux(self, extend=0):
         """ Communicates with the TSL2550D light sensor and returns a 
             lux value. 
