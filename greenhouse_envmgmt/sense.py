@@ -9,7 +9,6 @@
 # Note that SMBus must be imported and initiated
 #   in order to use these classes.
 import smbus
-import app.models as models
 from control import ControlCluster
 from i2c_utility import TCA_select, get_ADC_value, import_i2c_addr
 from i2c_utility import IO_expander_output, get_IO_reg
