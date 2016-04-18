@@ -2,6 +2,7 @@
 from i2c_utility import IO_expander_output, get_ADC_value
 from operator import itemgetter
 from math import pi
+from time import sleep
 
 
 class IterList(type):
@@ -211,6 +212,7 @@ class ControlCluster(object):
             self.manage(item, "on")
         for item in cast_arg(off):
             self.manage(item, "off")
+        sleep(.01) # Force delay to throttle requests
         return self.update()
 
     @property
