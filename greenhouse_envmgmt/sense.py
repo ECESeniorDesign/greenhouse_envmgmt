@@ -53,6 +53,7 @@ class SensorCluster(object):
         self.temp = 0
         self.humidity = 0
         self.lux = 0
+        self.light_ratio = 0
         self.soil_moisture = 0
         self.acidity = 0
         self.timestamp = time()  # record time at instantiation
@@ -106,6 +107,8 @@ class SensorCluster(object):
             count1 = get_lux_count(adc_ch1) * scale  # 5x for extended mode
             ratio = count1 / (count0 - count1)
             lux = (count0 - count1) * .39 * e**(-.181 * (ratio**2))
+            self.light_ratio = float(count1)/float(count0)
+            print("Light ratio Ch1/Ch0: ", self.light_ratio)
             self.lux = round(lux, 3)
             return TCA_select(SensorCluster.bus, self.mux_addr, "off")
         else:
