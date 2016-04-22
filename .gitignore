@@ -16,3 +16,5 @@ hardware/project
 *.pyc
 scripts/.~lock.test_log.txt#
 *.txt#
+hardware/sensor_module_1_0.pdf
+hardware/controls/controls_circuit.pdf
