@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from i2c_utility import IO_expander_output, get_ADC_value
+from i2c_utility import IO_expander_output, get_ADC_value, get_IO_reg
 from operator import itemgetter
 from math import pi
 from time import sleep
@@ -51,8 +51,11 @@ class ControlCluster(object):
         # Compute required # of IO expanders needed, clear mask variable.
         number_IO_expanders = ((len(cls._list) - 1) / 4) + 1
         cls.master_mask = [0, 0] * number_IO_expanders
+
         for ctrlobj in cls:
+            # Or masks together bank-by-banl
             cls.master_mask[ctrlobj.bank] |= ctrlobj.mask
+            # Handle the pump request seperately
             if ctrlobj.pump_request == 1:
                 cls.master_mask[cls.pump_bank] |= 1 << cls.pump_pin
 
@@ -215,6 +218,24 @@ class ControlCluster(object):
         sleep(.01) # Force delay to throttle requests
         return self.update()
 
+    def restore_state(self):
+        """ Method should be called on obj. initialization
+            When called, the method will attempt to restore 
+            IO expander and RPi coherence and restore
+            local knowledge across a possible power failure 
+        """
+        current_mask = get_IO_reg(ControlCluster.bus,
+                                 self.IOexpander, 
+                                 self.bank)
+        if current_mask & (1 << ControlCluster.pump_pin):
+            self.manage_pump("on")
+        if current_mask & (1 << self.fan):
+            self.manage_fan("on")
+        if current_mask & (1 << self.light):
+            self.manage_fan("on")
+
+
+
     @property
     def mask(self):
 
@@ -242,7 +263,7 @@ class ControlCluster(object):
         self.form_GPIO_map()
         self.controls = {"light": "off",
                          "valve": "off", "fan": "off", "pump": "off"}
-        # Create dynamically sized lists to hold IO data
+        self.restore_state()
         self._list.append(self)
 
 
