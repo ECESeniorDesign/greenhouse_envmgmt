@@ -24,181 +24,23 @@ class IterList(type):
 
 
 class SensorCluster(object):
-    'Base class for each individual plant containing sensor info'
     __metaclass__ = IterList
     _list = []
-    analog_power_pin = 0
-    power_bank = 0  # bank and pin used to toggle analog sensor power
-    temp_addr = 0x48
-    temp_chan = 3
-    humidity_addr = 0x27
-    humidity_chan = 1
-    lux_addr = 0x39
-    lux_chan = 0
-    adc_addr = 0x68
-    adc_chan = 2
-    moisture_chan = 1
-    tank_adc_adr = 0x6c
-    tank_adc_chan = 0
-    bus = None
 
-    def __init__(self, ID, mux_addr=None):
-
-        # Initializes cluster, enumeration, and sets up address info
+    def __init__(self, ID, address=None):
         sensor_addr = import_i2c_addr(SensorCluster.bus)
         if (ID < 1 or ID > len(sensor_addr)):
             raise I2CBusError("Plant ID out of range.")
-        self.mux_addr = mux_addr or (sensor_addr[ID-1])
-        self.ID = ID  # Plant number specified by caller
-        self.temp = 0
+        self.address = address or (sensor_addr[ID-1])
+        self.ID = ID
+        self.temp = 
         self.humidity = 0
         self.lux = 0
         self.light_ratio = 0
         self.soil_moisture = 0
-        self.acidity = 0
-        self.timestamp = time()  # record time at instantiation
-        self._list.append(self)
-        self.update_count = 0
-        
-
-    def update_lux(self, extend=0):
-        """ Communicates with the TSL2550D light sensor and returns a 
-            lux value. 
-
-        Note that this method contains approximately 1 second of total delay.
-            This delay is necessary in order to obtain full resolution
-            compensated lux values.
-
-        Alternatively, the device could be put in extended mode, 
-            which drops some resolution in favor of shorter delays.
-
-        """
-        DEVICE_REG_OUT = 0x1d
-        LUX_PWR_ON = 0x03
-        if extend == 1:
-            LUX_MODE = 0x1d
-            delay = .08
-            scale = 5
-        else:
-            LUX_MODE = 0x18
-            delay = .4
-            scale = 1
-        LUX_READ_CH0 = 0x43
-        LUX_READ_CH1 = 0x83
-        # Select correct I2C mux channel on TCA module
-
-        TCA_select(SensorCluster.bus, self.mux_addr, SensorCluster.lux_chan)
-        # Make sure lux sensor is powered up.
-        SensorCluster.bus.write_byte(SensorCluster.lux_addr, LUX_PWR_ON)
-        lux_on = SensorCluster.bus.read_byte_data(SensorCluster.lux_addr, LUX_PWR_ON)
-        
-        # Check for successful powerup
-        if (lux_on == LUX_PWR_ON):
-            # Send command to initiate ADC on each channel
-            # Read each channel after the new data is ready
-            SensorCluster.bus.write_byte(SensorCluster.lux_addr, LUX_MODE)
-            SensorCluster.bus.write_byte(SensorCluster.lux_addr, LUX_READ_CH0)
-            sleep(delay)
-            adc_ch0 = SensorCluster.bus.read_byte(SensorCluster.lux_addr)
-            count0 = get_lux_count(adc_ch0) * scale  # 5x for extended mode
-            SensorCluster.bus.write_byte(SensorCluster.lux_addr, LUX_READ_CH1)
-            sleep(delay)
-            adc_ch1 = SensorCluster.bus.read_byte(SensorCluster.lux_addr)
-            count1 = get_lux_count(adc_ch1) * scale  # 5x for extended mode
-            ratio = count1 / (count0 - count1)
-            lux = (count0 - count1) * .39 * e**(-.181 * (ratio**2))
-            self.light_ratio = float(count1)/float(count0)
-            print("Light ratio Ch1/Ch0: ", self.light_ratio)
-            self.lux = round(lux, 3)
-            return TCA_select(SensorCluster.bus, self.mux_addr, "off")
-        else:
-            raise SensorError("The lux sensor is powered down.")
-
-    def update_humidity_temp(self):
-        """ This method utilizes the HIH7xxx sensor to read
-            humidity and temperature in one call. 
-        """
-        # Create mask for STATUS (first two bits of 64 bit wide result)
-        STATUS = 0b11 << 6
-
-        TCA_select(SensorCluster.bus, self.mux_addr, SensorCluster.humidity_chan)
-        SensorCluster.bus.write_quick(SensorCluster.humidity_addr)  # Begin conversion
-        sleep(.25)
-        # wait 100ms to make sure the conversion takes place.
-        data = SensorCluster.bus.read_i2c_block_data(SensorCluster.humidity_addr, 0, 4)
-        status = (data[0] & STATUS) >> 6
-        
-        if status == 0 or status == 1:  # will always pass for now.
-            humidity = round((((data[0] & 0x3f) << 8) |
-                              data[1]) * 100.0 / (2**14 - 2), 3)
-            self.humidity = humidity
-            self.temp = (round((((data[2] << 6) + ((data[3] & 0xfc) >> 2))
-                               * 165.0 / 16382.0 - 40.0), 3) * 9/5) + 32
-            return TCA_select(SensorCluster.bus, self.mux_addr, "off")
-        else:
-            raise I2CBusError("Unable to retrieve humidity")
-
-    def update_soil_moisture(self):
-        """ Method will select the ADC module,
-                turn on the analog sensor, wait for voltage settle, 
-                and then digitize the sensor voltage. 
-            Voltage division/signal loss is accounted for by 
-                scaling up the sensor output.
-                This may need to be adjusted if a different sensor is used
-        """
-        SensorCluster.analog_sensor_power(SensorCluster.bus, "on")  # turn on sensor
-        sleep(.2)
-        TCA_select(SensorCluster.bus, self.mux_addr, SensorCluster.adc_chan)
-        moisture = get_ADC_value(
-            SensorCluster.bus, SensorCluster.adc_addr, SensorCluster.moisture_chan)
-        status = TCA_select(SensorCluster.bus, self.mux_addr, "off")  # Turn off mux.
-        SensorCluster.analog_sensor_power(SensorCluster.bus, "off")  # turn off sensor
-        if (moisture >= 0):
-            soil_moisture = moisture/2.048 # Scale to a percentage value 
-            self.soil_moisture = round(soil_moisture,3)
-        else:
-            raise SensorError(
-                "The soil moisture meter is not configured correctly.")
-        return status
-
-    def update_instance_sensors(self, opt=None):
-
-        """ Method runs through all sensor modules and updates 
-            to the latest sensor values.
-        After running through each sensor module,
-        The sensor head (the I2C multiplexer), is disabled
-        in order to avoid address conflicts.
-        Usage:
-            plant_sensor_object.updateAllSensors(bus_object)
-        """
-        self.update_count += 1
-        self.update_lux()
-        self.update_humidity_temp()
-        if opt == "all":
-            try:
-                self.update_soil_moisture()
-            except SensorError:
-                # This could be handled with a repeat request later.
-                pass
         self.timestamp = time()
-        # disable sensor module
+        self._list.append(self)
 
-        tca_status = TCA_select(SensorCluster.bus, self.mux_addr, "off")
-        if tca_status != 0:
-            raise I2CBusError(
-                "Bus multiplexer was unable to switch off to prevent conflicts")
-
-    def sensor_values(self):
-        """
-        Returns the values of all sensors for this cluster
-        """
-        self.update_instance_sensors(opt="all")
-        return {
-            "light": self.lux,
-            "water": self.soil_moisture,
-            "humidity": self.humidity,
-            "temperature": self.temp
-        }
 
     @classmethod
     def update_all_sensors(cls, opt=None):
@@ -216,33 +58,7 @@ class SensorCluster(object):
         for sensorobj in cls:
             sensorobj.update_instance_sensors(opt)
 
-    @classmethod
-    def analog_sensor_power(cls, bus, operation):
-        """ Method that turns on all of the analog sensor modules
-            Includes all attached soil moisture sensors
-            Note that all of the SensorCluster object should be attached
-                in parallel and only 1 GPIO pin is available
-                to toggle analog sensor power.
-            The sensor power should be left on for at least 100ms
-                in order to allow the sensors to stabilize before reading. 
-                Usage:  SensorCluster.analog_sensor_power(bus,"high")
-                OR      SensorCluster.analog_sensor_power(bus,"low")
-            This method should be removed if an off-board GPIO extender is used.
-        """
-        # Set appropriate analog sensor power bit in GPIO mask
-        # using the ControlCluster bank_mask to avoid overwriting any data
-        reg_data = get_IO_reg(bus, 0x20, cls.power_bank)
-
-        if operation == "on":
-            reg_data = reg_data | 1 << cls.analog_power_pin
-        elif operation == "off":
-            reg_data = reg_data & (0b11111111 ^ (1 << cls.analog_power_pin))
-        else:
-            raise SensorError(
-                "Invalid command used while enabling analog sensors")
-        # Send updated IO mask to output
-        IO_expander_output(bus, 0x20, cls.power_bank, reg_data)
-
+    
     @classmethod
     def get_water_level(cls):
         """ This method uses the ADC on the control module to measure
@@ -279,25 +95,269 @@ class SensorCluster(object):
         return depth_cm/tank_height
 
 
-def get_lux_count(lux_byte):
-    """ Method to convert data from the TSL2550D lux sensor
-    into more easily usable ADC count values.
+class I2CSensor(object):
+    """ Base class for I2C enabled sensors."""
 
+    __metaclass__ = IterList
+    _list = []
+    available = {
+        'HIH7xxx': 'humidity,temperature',
+        'TSL255xx': 'light',
+        'MCP342x': 'analog'
+        }
+    bus = None
+
+    def __init__(self, address, channel):
+        """ Initializes an I2CSensor object. 
+        Must receive an I2C address in hex or decimal. 
+        Must receive a metric type as a string.
+        
+        if I2CSensor.bus is None:
+            I2CSensor.bus = smbus.SMBus(1)
+        """
+        self.address = address
+        self.channel = channel # Sensors start with a value of 0
+        self._list.append(self) # Track a list of all I2CSensor devices
+
+    def update(self):
+        pass
+
+    def measures(self):
+        return self.metric
+
+    def set_address(self, addr):
+        self.address = addr
+
+
+
+class HIH71xx(I2CSensor):
+    metric = ['humidity', 'temperature']
+
+    def __init__(self, address, channel):
+        I2CSensor.__init__(self,address, channel)
+        self._humidity = 0
+        self._temp = 0
+
+
+    def update(self):
+        STATUS = 0b11 << 6
+        # Move TCA_Selects outside of sensor modules
+        TCA_select(self.bus, self.mux_addr, self.channel)
+        self.bus.write_quick(self.address)  # Begin conversion
+        sleep(.25)
+        # wait 100ms to make sure the conversion takes place.
+        data = self.bus.read_i2c_block_data(SensorCluster.humidity_addr, 0, 4)
+        status = (data[0] & STATUS) >> 6
+        if status == 0 or status == 1:  # will always pass for now.
+            humidity = round((((data[0] & 0x3f) << 8) |
+                              data[1]) * 100.0 / (2**14 - 2), 3)
+            self.humidity = humidity
+            self.temp = (round((((data[2] << 6) + ((data[3] & 0xfc) >> 2))
+                               * 165.0 / 16382.0 - 40.0), 3) * 9/5) + 32
+            return TCA_select(self.bus, self.mux_addr, "off") # Move out
+        else:
+            raise I2CBusError("Unable to retrieve humidity")
+
+    def humidity():
+        doc = "Humidity property"
+        def fget(self):
+            return self._humidity
+        def fset(self, value):
+            self._humidity = value
+        return locals()
+    humidity = property(**humidity())
+
+    def temp():
+        doc = "Temperature property"
+        def fget(self):
+            return self._temp
+        def fset(self, value):
+            self._temp = value
+        return locals()
+    light = property(**temp())
+
+class TSL255xx(I2CSensor):
+    """ Class to handle exchanges between a caller
+        and a TSL255 Ambient Light Sensor.
+
+        Attributes:
+        obj.lux
+        obj.light_ratio
     """
-    LUX_VALID_MASK = 0b10000000
-    LUX_CHORD_MASK = 0b01110000
-    LUX_STEP_MASK = 0b00001111
-    valid = lux_byte & LUX_VALID_MASK
-    if valid != 0:
-        step_num = (lux_byte & LUX_STEP_MASK)
-        # Shift to normalize value
-        chord_num = (lux_byte & LUX_CHORD_MASK) >> 4
-        step_val = 2**chord_num
-        chord_val = int(16.5 * (step_val - 1))
-        count = chord_val + step_val * step_num
-        return count
-    else:
-        raise SensorError("Invalid lux sensor data.")
+    metric = ['light']
+
+
+    def __init__(self, address, channel):
+        I2CSensor.__init__(self,address, channel)
+        self._lux = 0
+        self._light_ratio = 0
+
+    def update(self, extend=1):
+        """ Communicates with the TSL2550D light sensor and returns a 
+            lux value. 
+        Note that this method contains some degree of delay. 
+        Alternatively, the device could be put in extended mode, 
+            which drops some resolution in favor of shorter delays.
+
+        Default operation is extended mode.
+        """
+        DEVICE_REG_OUT = 0x1d
+        LUX_PWR_ON = 0x03
+        if extend == 1:
+            LUX_MODE = 0x1d
+            delay = .08
+            scale = 5
+        else:
+            LUX_MODE = 0x18
+            delay = .4
+            scale = 1
+        LUX_READ_CH0 = 0x43
+        LUX_READ_CH1 = 0x83
+        # Select correct I2C mux channel on TCA module
+        TCA_select(self.bus, self.mux_addr, SensorCluster.lux_chan) # move out
+        # Make sure lux sensor is powered up.
+        self.bus.write_byte(self.address, LUX_PWR_ON)
+        lux_on = self.bus.read_byte_data(self.address, LUX_PWR_ON)
+        # Check for successful powerup
+        if (lux_on == LUX_PWR_ON):
+            # Send command to initiate ADC on each channel
+            # Read each channel after the new data is ready
+            self.bus.write_byte(self.address, LUX_MODE)
+            self.bus.write_byte(self.address, LUX_READ_CH0)
+            sleep(delay)
+            adc_ch0 = self.bus.read_byte(self.address)
+            count0 = get_lux_count(adc_ch0) * scale  # 5x for extended mode
+            self.bus.write_byte(self.address, LUX_READ_CH1)
+            sleep(delay)
+            adc_ch1 = self.bus.read_byte(self.address)
+            count1 = get_lux_count(adc_ch1) * scale  # 5x for extended mode
+            ratio = count1 / (count0 - count1)
+            lux = (count0 - count1) * .39 * e**(-.181 * (ratio**2))
+            self.light_ratio = float(count1)/float(count0)
+            self.lux = round(lux, 3)
+            return TCA_select(SensorCluster.bus, self.mux_addr, "off") # move out
+        else:
+            raise SensorError("The lux sensor is powered down.")
+
+
+    @staticmethod
+    def get_lux_count(lux_byte):
+        """ Method to convert data from the TSL2550D lux sensor
+        into more easily usable ADC count values.
+
+        """
+        LUX_VALID_MASK = 0b10000000
+        LUX_CHORD_MASK = 0b01110000
+        LUX_STEP_MASK = 0b00001111
+        valid = lux_byte & LUX_VALID_MASK
+        if valid != 0:
+            step_num = (lux_byte & LUX_STEP_MASK)
+            # Shift to normalize value
+            chord_num = (lux_byte & LUX_CHORD_MASK) >> 4
+            step_val = 2**chord_num
+            chord_val = int(16.5 * (step_val - 1))
+            count = chord_val + step_val * step_num
+            return count
+        else:
+            raise SensorError("Invalid lux sensor data.")
+
+    def lux():
+        doc = "Lux property"
+        def fget(self):
+            return self._lux
+        def fset(self, value):
+            self._lux = value
+        return locals()
+    lux = property(**lux())
+
+    def light_ratio():
+        doc = "Lux property"
+        def fget(self):
+            return self._light_ratio
+        def fset(self, value):
+            self._light_ratio = value
+        return locals()
+    light_ratio = property(**light_ratio())
+
+class MCP34xx(I2CSensor):
+    metric = ['analog']
+    analog_power_pin = 0 # See ControlCluster class to ensure no conflicts
+    power_bank = 0  # bank and pin used to toggle analog sensor power
+    soil_chan = 1
+
+    def __init__(self, address, channel):
+        I2CSensor.__init__(self,address, channel)
+        self._soil_moisture = 0
+
+
+    def update(self, channel):
+        """ Method will select the ADC module,
+                turn on the analog sensor, wait for voltage settle, 
+                and then digitize the sensor voltage. 
+            Voltage division/signal loss is accounted for by 
+                scaling up the sensor output.
+                This may need to be adjusted if a different sensor is used
+        """
+
+        MCP34xx.analog_sensor_power(self.bus, "on")
+
+        sleep(.2)
+        TCA_select(SensorCluster.bus, self.mux_addr, SensorCluster.adc_chan) # move out
+        moisture = get_ADC_value(
+            self.bus, self.address, MCP34xx.soil_chan)
+        status = TCA_select(
+            SensorCluster.bus, self.mux_addr, "off")  # Turn off mux.
+
+        SensorCluster.analog_sensor_power(self.bus, "off")  # turn off sensor
+
+        if (moisture >= 0):
+            soil_moisture = moisture/2.048 # Scale to a percentage value 
+            self.soil_moisture = round(soil_moisture,3)
+        else:
+            raise SensorError(
+                "The soil moisture meter is not configured correctly.")
+        return status
+
+    @classmethod
+        """ Method to toggle power to the analog sensors attached to the ADC. 
+        If power to these sensors is always-on, this method need not be used.
+
+        operation="on" or "off"
+        """
+        def analog_sensor_power(cls, bus, operation):
+            """ Method that turns on all of the analog sensor modules
+                Includes all attached soil moisture sensors
+                Note that all of the SensorCluster object should be attached
+                    in parallel and only 1 GPIO pin is available
+                    to toggle analog sensor power.
+                The sensor power should be left on for at least 100ms
+                    in order to allow the sensors to stabilize before reading. 
+                    Usage:  SensorCluster.analog_sensor_power(bus,"high")
+                    OR      SensorCluster.analog_sensor_power(bus,"low")
+                This method should be removed if an off-board GPIO extender is used.
+            """
+            # Set appropriate analog sensor power bit in GPIO mask
+            # using the ControlCluster bank_mask to avoid overwriting any data
+            reg_data = get_IO_reg(bus, 0x20, cls.power_bank)
+
+            if operation == "on":
+                reg_data = reg_data | 1 << cls.analog_power_pin
+            elif operation == "off":
+                reg_data = reg_data & (0b11111111 ^ (1 << cls.analog_power_pin))
+            else:
+                raise SensorError(
+                    "Invalid command used while enabling analog sensors")
+            # Send updated IO mask to output
+            IO_expander_output(bus, 0x20, cls.power_bank, reg_data)
+
+    def soil_moisture():
+        doc = "Soil Moisture property
+        def fget(self):
+            return self._soil_moisture
+        def fset(self, value):
+            self._soil_moisture = value
+        return locals()
+    soil_moisture = property(**soil_moisture())
 
 
 class SensorError(Exception):
@@ -317,3 +377,5 @@ class I2CBusError(Exception):
             after successive updates. 
     """
     pass
+
+
